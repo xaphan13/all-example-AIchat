@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .message-bubble {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .typing-indicator::after {
+            content: '';
+            animation: typing 1.5s infinite;
+        }
+        
+        @keyframes typing {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .typing-dots {
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glow-effect:hover {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+            transform: scale(1.02);
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen gradient-bg">
+    <div class="flex flex-col h-screen max-w-6xl mx-auto bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-3xl m-4 shadow-2xl glass-card glow-effect">
+        <!-- Header -->
+        <header class="flex items-center justify-between p-6 border-b border-slate-700/50 bg-slate-800/30">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center floating">
+                    <i data-lucide="bot" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">AI Assistant</h1>
+                    <p class="text-sm text-gray-300">Always here to help</p>
+                </div>
+                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse ml-2"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="p-3 text-slate-400 hover:text-white transition-all duration-300 rounded-xl hover:bg-slate-700/50 transform hover:scale-105">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+                <button class="p-3 text-slate-400 hover:text-white transition-all duration-300 rounded-xl hover:bg-slate-700/50 transform hover:scale-105">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </button>
+                <button onclick="logout()" class="p-3 text-slate-400 hover:text-red-400 transition-all duration-300 rounded-xl hover:bg-slate-700/50 transform hover:scale-105">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-8 space-y-4 scrollbar-hide">
+            <!-- Welcome Message -->
+            <div class="flex justify-start">
+                <div class="max-w-xs lg:max-w-md xl:max-w-lg">
+                    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl rounded-tl-none px-6 py-4 message-bubble glass-card">
+                        <p class="text-sm">Hello! I'm your AI assistant. How can I help you today?</p>
+                        <p class="text-xs text-purple-200 mt-2 opacity-70">Just now</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User messages and AI responses will be dynamically added here -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 border-t border-slate-700/50 bg-slate-800/30">
+            <form id="chat-form" class="flex items-end space-x-4">
+                <div class="flex-1 relative">
+                    <textarea 
+                        id="message-input"
+                        placeholder="Ask me anything..."
+                        class="w-full px-6 py-4 pr-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none max-h-32 input-focus transition-all duration-300"
+                        rows="1"
+                    ></textarea>
+                    <button type="button" class="absolute right-3 bottom-3 p-2 text-slate-400 hover:text-purple-400 transition-all duration-300 transform hover:scale-110">
+                        <i data-lucide="paperclip" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <button 
+                    type="submit"
+                    class="px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
+                    id="send-button"
+                >
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('message-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+        });
+
+        // Handle form submission
+        document.getElementById('chat-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const message = textarea.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            textarea.value = '';
+            textarea.style.height = 'auto';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: message })
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // Remove typing indicator and add AI response
+                removeTypingIndicator();
+                addMessage(data.response || 'I received your message!', 'ai');
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+            }
+        });
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-bubble`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `max-w-xs lg:max-w-md xl:max-w-lg`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = sender === 'user' 
+                ? 'bg-white/20 backdrop-blur-sm text-white rounded-2xl rounded-br-none border border-white/20 px-6 py-4' 
+                : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl rounded-bl-none glass-card px-6 py-4';
+            
+            bubbleDiv.innerHTML = `
+                <p class="text-sm leading-relaxed">${text}</p>
+                <p class="text-xs opacity-70 mt-2">${new Date().toLocaleTimeString()}</p>
+            `;
+            
+            contentDiv.appendChild(bubbleDiv);
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex justify-start message-bubble';
+            typingDiv.innerHTML = `
+                <div class="max-w-xs">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl rounded-tl-none px-6 py-4 border border-white/20">
+                        <div class="flex space-x-2 items-center">
+                            <div class="w-2.5 h-2.5 bg-purple-400 rounded-full typing-dots" style="animation-delay: 0ms"></div>
+                            <div class="w-2.5 h-2.5 bg-purple-400 rounded-full typing-dots" style="animation-delay: 200ms"></div>
+                            <div class="w-2.5 h-2.5 bg-purple-400 rounded-full typing-dots" style="animation-delay: 400ms"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        // Handle Enter key for sending messages
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

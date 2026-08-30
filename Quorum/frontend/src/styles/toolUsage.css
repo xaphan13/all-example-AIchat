@@ -1,0 +1,159 @@
+/**
+ * Tool Usage Display Styles
+ * Contained visual for tool usage (especially web search)
+ * Complements the generation cycle without conflicting with existing UI
+ */
+
+.tool-usage-container {
+  @apply my-4 rounded-xl border overflow-hidden;
+  border-color: oklch(0.28 0.010 264);
+  background: oklch(0.20 0.010 264);
+  backdrop-filter: blur-sm;
+  box-shadow: 
+    0 1px 3px rgb(0 0 0 / 0.4),
+    0 2px 6px -2px rgb(0 0 0 / 0.5);
+  transition: box-shadow 0.3s;
+}
+
+.tool-usage-container:hover {
+  box-shadow: 
+    0 4px 12px rgb(0 0 0 / 0.5),
+    0 8px 24px -8px rgb(0 0 0 / 0.6);
+}
+
+.tool-usage-header {
+  @apply flex items-center gap-2 px-4 py-3 border-b font-medium;
+  background: oklch(0.18 0.010 264 / 0.6);
+  border-color: oklch(0.28 0.010 264);
+  color: oklch(0.85 0.008 264);
+}
+
+.tool-usage-content {
+  @apply p-4 space-y-3;
+}
+
+.tool-usage-item {
+  @apply flex gap-3 p-3 rounded-lg border transition-all duration-200;
+  background: oklch(0.22 0.012 264 / 0.8);
+  border-color: oklch(0.28 0.010 264);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.tool-usage-item:hover {
+  border-color: oklch(0.50 0.12 250);
+  background: oklch(0.24 0.012 264 / 0.9);
+}
+
+.tool-icon {
+  @apply flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border;
+  background: oklch(0.20 0.015 250 / 0.8);
+  border-color: oklch(0.35 0.012 250);
+}
+
+.tool-details {
+  @apply flex-1 min-w-0 space-y-2;
+}
+
+.tool-name-row {
+  @apply flex items-center justify-between gap-2;
+}
+
+.tool-name {
+  @apply text-sm font-semibold;
+  color: oklch(0.92 0.005 264);
+}
+
+.tool-status {
+  @apply flex items-center gap-1.5 text-xs font-medium rounded-full px-2 py-0.5 border;
+}
+
+.tool-status.status-pending {
+  background: oklch(0.25 0.020 250 / 0.8);
+  color: oklch(0.70 0.15 250);
+  border-color: oklch(0.35 0.025 250);
+}
+
+.tool-status.status-complete {
+  background: oklch(0.22 0.025 150 / 0.8);
+  color: oklch(0.70 0.15 150);
+  border-color: oklch(0.32 0.030 150);
+}
+
+.tool-status.status-error {
+  background: oklch(0.25 0.025 15 / 0.8);
+  color: oklch(0.75 0.18 15);
+  border-color: oklch(0.35 0.030 15);
+}
+
+.status-spinner {
+  @apply relative w-3 h-3;
+}
+
+.spinner-ring {
+  @apply absolute inset-0 border-2 border-transparent rounded-full;
+  border-top-color: oklch(0.65 0.15 250);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tool-query {
+  @apply flex items-center gap-2 text-sm rounded-md px-3 py-2 border;
+  color: oklch(0.85 0.008 264);
+  background: oklch(0.18 0.010 264 / 0.8);
+  border-color: oklch(0.28 0.010 264);
+}
+
+.query-text {
+  @apply flex-1 font-medium truncate;
+}
+
+.tool-provider {
+  @apply text-xs italic;
+  color: oklch(0.65 0.010 264);
+}
+
+.tool-results {
+  @apply mt-2 space-y-1.5 pl-2 border-l-2;
+  border-color: oklch(0.35 0.012 250);
+}
+
+.result-link {
+  @apply flex items-center gap-1.5 text-xs hover:underline transition-colors duration-150 py-1;
+  color: oklch(0.65 0.15 250);
+}
+
+.result-link:hover {
+  color: oklch(0.75 0.15 250);
+}
+
+.result-title {
+  @apply truncate flex-1;
+}
+
+.more-results {
+  @apply inline-block text-xs mt-1 font-medium;
+  color: oklch(0.65 0.010 264);
+}
+
+/* Dark mode is now the default - light mode support removed for consistency */
+
+/* Animation variants */
+.tool-usage-item-enter {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+

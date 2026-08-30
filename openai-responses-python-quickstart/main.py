@@ -1,0 +1,127 @@
+import asyncio
+import json
+import logging
+import os
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from routers import audio, chat, files, setup
+from utils.computer_use import session_manager
+from utils.conversations import create_conversation
+
+logger = logging.getLogger("uvicorn.error")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # If tool.config.json doens't exist, create it
+    if not os.path.exists("tool.config.json"):
+        default_config = json.dumps(
+            {"mcp_servers": [], "custom_functions": [
+                {
+                    "name": "get_weather",
+                    "import_path": "utils.custom_functions",
+                    "template_path": "components/weather-widget.html"}
+                ]
+            },
+            indent=4
+        )
+        # Offload the blocking write so the event loop isn't stalled at startup
+        await asyncio.to_thread(Path("tool.config.json").write_text, default_config)
+    # Optional startup logic
+    yield
+    # Clean up browser sessions on shutdown
+    await session_manager.close_all()
+
+app = FastAPI(lifespan=lifespan)
+
+# Mount routers
+app.include_router(audio.router)
+app.include_router(chat.router)
+app.include_router(files.router)
+app.include_router(setup.router)
+
+# Mount static files (e.g., CSS, JS)
+app.mount("/static", StaticFiles(directory=os.path.join(os.getcwd(), "static")), name="static")
+
+# Initialize Jinja2 templates
+templates = Jinja2Templates(directory="templates")
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception) -> Response:
+    logger.error(f"Unhandled error: {exc}")
+    return templates.TemplateResponse(
+        request, "error.html",
+        {"error_message": str(exc)},
+        status_code=500
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Log the detailed validation errors
+    logger.error(f"Validation error: {exc.errors()}") 
+    error_details = "; ".join([f"{err['loc'][-1]}: {err['msg']}" for err in exc.errors()])
+
+    # Check if it's an htmx request
+    if request.headers.get("hx-request") == "true":
+        # Return an HTML fragment suitable for htmx swapping
+        error_html = f'<div id="file-list-container"><p class="errorMessage">Validation Error: {error_details}</p></div>' # Assuming target is file-list-container
+        return HTMLResponse(content=error_html, status_code=200)
+    else:
+        # Return the full error page for standard requests
+        return templates.TemplateResponse(
+            request, "error.html",
+            {"error_message": f"Invalid input: {error_details}"},
+            status_code=422,
+        )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> Response:
+    logger.error(f"HTTP error: {exc.detail}")
+    return templates.TemplateResponse(
+        request, "error.html",
+        {"error_message": exc.detail},
+        status_code=exc.status_code
+    )
+
+
+# TODO: Implement some kind of thread id storage or management logic to allow
+# user to load an old thread, delete an old thread, etc. instead of start new
+@app.get("/")
+async def read_home(
+    request: Request,
+    conversation_id: str | None = None,
+    messages: list[dict[str, Any]] | None = None
+) -> Response:
+    logger.info("Home page requested")
+    
+    # Check if environment variables are missing
+    load_dotenv(override=True)
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    responses_model = os.getenv("RESPONSES_MODEL")
+    if not openai_api_key or not responses_model:
+        return RedirectResponse(url=app.url_path_for("read_setup"))
+
+    # Create a new conversation if none provided
+    if not conversation_id or conversation_id == "None" or conversation_id == "null":
+        conversation_id = await create_conversation()
+    
+    return templates.TemplateResponse(
+        request, "index.html",
+        {
+            "messages": messages or [],
+            "conversation_id": conversation_id
+        }
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

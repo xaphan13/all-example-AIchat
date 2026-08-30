@@ -1,0 +1,3 @@
+# Required for whmcs_login_browser.py script (run on local machine)
+playwright>=1.40.0
+httpx>=0.26.0

@@ -1,0 +1,283 @@
+<!-- setup.html -->
+{% extends "layout.html" %}
+
+{% block content %}
+        <div class="setupContainer">
+          {% if status and status_message %}
+            <p class="status-message {{ status }}">{{ status_message }}</p>
+          {% endif %}
+
+          {% if "API key" in setup_message %}
+            <div class="setupSection">
+              <h3>Setup Required</h3>
+              <p class="setupMessage">{{ setup_message }}</p>
+              <form action="{{ url_for('set_openai_api_key') }}" method="POST">
+                <div class="inputWrapper">
+                  <input 
+                    type="text"
+                    name="api_key"
+                    placeholder="sk-..."
+                    required
+                    class="input"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    aria-label="OpenAI API key"
+                  >
+                </div>
+                <button 
+                  type="submit"
+                  class="button"
+                >
+                  Save API Key
+                </button>
+              </form>
+            </div>
+          {% else %}
+              {# ── Model & Instructions ── #}
+              <div class="setupSection">
+                <h3>Model &amp; Instructions</h3>
+                <form action="{{ url_for('save_app_config') }}" method="POST">
+                  <div>
+                    <label for="model-select">Select Model:</label>
+                    <select name="model" id="model-select" class="input" required>
+                      {% if available_models %}
+                        {% for model_id in available_models %}
+                          <option value="{{ model_id }}" {% if model_id == current_model %}selected{% endif %}>{{ model_id }}</option>
+                        {% endfor %}
+                      {% else %}
+                        <option value="" disabled>Could not load models</option>
+                        {% if current_model %}
+                          <option value="{{ current_model }}" selected>{{ current_model }} (current)</option>
+                        {% else %}
+                           <option value="gpt-4o" selected>gpt-4o (default)</option>
+                        {% endif %}
+                      {% endif %}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="instructions-input">System Prompt:</label>
+                    <textarea
+                      name="instructions"
+                      id="instructions-input"
+                      class="input"
+                      rows="4"
+                      placeholder="e.g., You are a helpful assistant."
+                      style="width: 100%; resize: none;"
+                    >{% if current_instructions %}{{ current_instructions }}{% else %}You are a helpful assistant.{% endif %}</textarea>
+                  </div>
+
+                  {# ── Tools ── #}
+                  <fieldset class="setupFieldset">
+                    <legend>Tools</legend>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="code_interpreter" {% if "code_interpreter" in current_tools %}checked{% endif %}>
+                      Code Interpreter
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="file_search" {% if "file_search" in current_tools %}checked{% endif %}>
+                      File Search
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="function" {% if "function" in current_tools %}checked{% endif %}>
+                      Custom Functions
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="mcp" {% if "mcp" in current_tools %}checked{% endif %}>
+                      MCP Tools
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="web_search" {% if "web_search" in current_tools %}checked{% endif %}>
+                      Web Search
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="computer_use" {% if "computer_use" in current_tools %}checked{% endif %}>
+                      Computer Use
+                    </label>
+                    <label>
+                      <input type="checkbox" name="tool_types" value="image_generation" {% if "image_generation" in current_tools %}checked{% endif %}>
+                      Image Generation
+                    </label>
+                  </fieldset>
+
+                  {# ── Display ── #}
+                  <fieldset class="setupFieldset">
+                    <legend>Display</legend>
+                    <label>
+                      <input type="checkbox" name="show_tool_call_detail" value="true" {% if current_show_tool_call_detail %}checked{% endif %}>
+                      Show tool call detail in responses
+                    </label>
+                  </fieldset>
+
+                  <div class="centered-button-container">
+                    <button type="submit" class="button">Save Configuration</button>
+                  </div>
+                </form>
+              </div>
+
+              {# ── File Management ── #}
+              {% if "file_search" in current_tools %}
+                <div class="setupSection">
+                  {% include 'components/file-viewer.html' %}
+                </div>
+              {% endif %}
+
+              {# ── Web Search Configuration ── #}
+              {% if "web_search" in current_tools %}
+                <div class="setupSection">
+                  <h3>Web Search</h3>
+                  <p class="setupMessage">Configure web search context size and optional location for localized results.</p>
+                  <form action="{{ url_for('save_app_config') }}" method="POST">
+                    <input type="hidden" name="action" value="save_web_search_config">
+
+                    <div>
+                      <label for="web-search-context-size">Search Context Size:</label>
+                      <select name="web_search_context_size" id="web-search-context-size" class="input">
+                        <option value="low" {% if web_search_context_size == "low" %}selected{% endif %}>Low (fast, lower cost)</option>
+                        <option value="medium" {% if web_search_context_size != "low" and web_search_context_size != "high" %}selected{% endif %}>Medium (default)</option>
+                        <option value="high" {% if web_search_context_size == "high" %}selected{% endif %}>High (comprehensive, higher cost)</option>
+                      </select>
+                    </div>
+
+                    <fieldset class="setupFieldset">
+                      <legend>User Location (optional)</legend>
+                      <div>
+                        <label for="web-search-country">Country (ISO 3166-1 code):</label>
+                        <input type="text" name="web_search_country" id="web-search-country" class="input" placeholder="e.g., US" maxlength="2" value="{{ web_search_country or '' }}">
+                      </div>
+                      <div>
+                        <label for="web-search-city">City:</label>
+                        <input type="text" name="web_search_city" id="web-search-city" class="input" placeholder="e.g., New York" value="{{ web_search_city or '' }}">
+                      </div>
+                      <div>
+                        <label for="web-search-region">Region / State:</label>
+                        <input type="text" name="web_search_region" id="web-search-region" class="input" placeholder="e.g., New York" value="{{ web_search_region or '' }}">
+                      </div>
+                      <div>
+                        <label for="web-search-timezone">Timezone (IANA):</label>
+                        <input type="text" name="web_search_timezone" id="web-search-timezone" class="input" placeholder="e.g., America/New_York" value="{{ web_search_timezone or '' }}">
+                      </div>
+                    </fieldset>
+
+                    <div class="centered-button-container">
+                      <button type="submit" class="button">Save web search config</button>
+                    </div>
+                  </form>
+                </div>
+              {% endif %}
+
+
+
+              {# ── Image Generation Configuration ── #}
+              {% if "image_generation" in current_tools %}
+                <div class="setupSection">
+                  <h3>Image Generation</h3>
+                  <p class="setupMessage">Configure image generation quality, size, and background options.</p>
+                  <form action="{{ url_for('save_app_config') }}" method="POST">
+                    <input type="hidden" name="action" value="save_image_generation_config">
+
+                    <div>
+                      <label for="image-gen-quality">Quality:</label>
+                      <select name="image_generation_quality" id="image-gen-quality" class="input">
+                        <option value="auto" {% if image_generation_quality == "auto" %}selected{% endif %}>Auto (default)</option>
+                        <option value="low" {% if image_generation_quality == "low" %}selected{% endif %}>Low (fast, lower cost)</option>
+                        <option value="medium" {% if image_generation_quality == "medium" %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if image_generation_quality == "high" %}selected{% endif %}>High</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="image-gen-size">Size:</label>
+                      <select name="image_generation_size" id="image-gen-size" class="input">
+                        <option value="auto" {% if image_generation_size == "auto" %}selected{% endif %}>Auto (default)</option>
+                        <option value="1024x1024" {% if image_generation_size == "1024x1024" %}selected{% endif %}>1024x1024 (square)</option>
+                        <option value="1536x1024" {% if image_generation_size == "1536x1024" %}selected{% endif %}>1536x1024 (landscape)</option>
+                        <option value="1024x1536" {% if image_generation_size == "1024x1536" %}selected{% endif %}>1024x1536 (portrait)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="image-gen-background">Background:</label>
+                      <select name="image_generation_background" id="image-gen-background" class="input">
+                        <option value="auto" {% if image_generation_background == "auto" %}selected{% endif %}>Auto (default)</option>
+                        <option value="opaque" {% if image_generation_background == "opaque" %}selected{% endif %}>Opaque</option>
+                        <option value="transparent" {% if image_generation_background == "transparent" %}selected{% endif %}>Transparent</option>
+                      </select>
+                    </div>
+
+                    <div class="centered-button-container">
+                      <button type="submit" class="button">Save image generation config</button>
+                    </div>
+                  </form>
+                </div>
+              {% endif %}
+
+              {# ── Custom Functions & MCP Servers ── #}
+              {% if "function" in current_tools or "mcp" in current_tools %}
+                <form action="{{ url_for('save_app_config') }}" method="POST" id="tool-config-form">
+                  <input type="hidden" name="action" value="regenerate_registry">
+              {% endif %}
+              {% if "function" in current_tools %}
+                <div class="setupSection">
+                  <h3>Custom Functions</h3>
+                  <p class="setupMessage">Provide function entries to include in <code>tool.config.json</code>. Use module import path for functions and a template path relative to the <code>templates/</code> directory (e.g., <code>components/weather-widget.html</code>). If you paste a path beginning with <code>templates/</code>, it will be normalized automatically.</p>
+
+                  <div id="registry-rows" style="align-self: flex-start;">
+                    {% if existing_registry_entries %}
+                      {% for entry in existing_registry_entries %}
+                        {% set index = loop.index0 %}
+                        {% set name = entry.name %}
+                        {% set import_path = entry.import_path %}
+                        {% set template_path = entry.template_path %}
+                        {% include 'components/registry-row.html' %}
+                      {% endfor %}
+                    {% else %}
+                      {% set index = 0 %}
+                      {% include 'components/registry-row.html' %}
+                    {% endif %}
+                  </div>
+
+                  <div style="align-self: flex-start;">
+                    <button type="button" class="button" hx-get="{{ url_for('new_registry_row') }}" hx-target="#registry-rows" hx-swap="beforeend" hx-include="#registry-rows input[name='reg_function_names'], #registry-rows input[name='reg_import_paths'], #registry-rows input[name='reg_template_paths']">Add Function</button>
+                  </div>
+                </div>
+              {% endif %}
+              {% if "mcp" in current_tools %}
+                <div class="setupSection">
+                  <h3>MCP Servers</h3>
+                  <p class="setupMessage">Add MCP servers to include in <code>tool.config.json</code>. Provide a label and either a server URL or a connector ID.</p>
+
+                  <div id="mcp-rows" style="align-self: flex-start;">
+                    {% if existing_mcp_servers %}
+                      {% for srv in existing_mcp_servers %}
+                        {% set index = loop.index0 %}
+                        {% set label = srv.server_label %}
+                        {% set server_url = srv.server_url if 'server_url' in srv else '' %}
+                        {% set connector_id = srv.connector_id if 'connector_id' in srv else '' %}
+                        {% set authorization = srv.authorization if 'authorization' in srv else '' %}
+                        {% set headers_json = srv.headers_json if 'headers_json' in srv else '' %}
+                        {% set require_approval = srv.require_approval if 'require_approval' in srv else 'never' %}
+                        {% include 'components/mcp-row.html' %}
+                      {% endfor %}
+                    {% else %}
+                      {% set index = 0 %}
+                      {% set require_approval = 'never' %}
+                      {% include 'components/mcp-row.html' %}
+                    {% endif %}
+                  </div>
+
+                  <div style="align-self: flex-start;">
+                    <button type="button" class="button" hx-get="{{ url_for('new_mcp_row') }}" hx-target="#mcp-rows" hx-swap="beforeend" hx-include="#mcp-rows input[name='mcp_labels'], #mcp-rows input[name='mcp_server_urls'], #mcp-rows input[name='mcp_connector_ids'], #mcp-rows input[name='mcp_authorizations'], #mcp-rows textarea[name='mcp_headers_jsons'], #mcp-rows input[name='mcp_require_approvals']">Add MCP Server</button>
+                  </div>
+                </div>
+              {% endif %}
+              {% if "function" in current_tools or "mcp" in current_tools %}
+                <div class="centered-button-container">
+                  <button type="submit" class="button">Save tool config</button>
+                </div>
+                </form>
+              {% endif %}
+          {% endif %}
+        </div>
+{% endblock %}

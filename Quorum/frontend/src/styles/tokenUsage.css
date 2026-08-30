@@ -1,0 +1,491 @@
+/**
+ * Token Usage Display Styles
+ */
+
+.token-usage-container {
+  padding: 2rem;
+  background: var(--surface-color, #1a1a1a);
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+.token-usage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.token-usage-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.token-usage-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.refresh-button {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.refresh-button:hover {
+  background: var(--primary-hover, #5558e3);
+  transform: translateY(-1px);
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #a0a0a0);
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Overview Cards */
+.token-usage-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--card-bg, #252525);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin-bottom: 0.5rem;
+}
+
+.stat-breakdown {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.cost-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.cost-value {
+  color: #fff;
+}
+
+/* Usage Sections */
+.token-usage-section {
+  margin-top: 2rem;
+}
+
+.token-usage-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 1rem;
+}
+
+.usage-table {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.usage-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg, #252525);
+}
+
+.usage-table thead {
+  background: var(--table-header-bg, #1a1a1a);
+}
+
+.usage-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.usage-table td {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color, #333);
+  color: var(--text-primary, #fff);
+}
+
+.usage-table tbody tr:hover {
+  background: var(--hover-bg, #2a2a2a);
+}
+
+.model-name,
+.agent-name {
+  font-weight: 500;
+  color: var(--accent-color, #6366f1);
+}
+
+.cost-cell {
+  font-weight: 600;
+  color: #10b981;
+}
+
+/* Loading & Error States */
+.token-usage-loading,
+.token-usage-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color, #333);
+  border-top-color: var(--primary-color, #6366f1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.token-usage-error button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--primary-color, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/**
+ * Cost Calculator Styles
+ */
+
+.cost-calculator-container {
+  padding: 2rem;
+  background: var(--surface-color, #1a1a1a);
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+.cost-calculator-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.cost-calculator-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.cost-calculator-header p {
+  margin: 0;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.cost-calculator-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.model-select,
+.token-input {
+  padding: 0.75rem;
+  background: var(--input-bg, #252525);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  color: var(--text-primary, #fff);
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.model-select:focus,
+.token-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.selected-model-pricing {
+  background: var(--card-bg, #252525);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+  margin-bottom: 2rem;
+}
+
+.selected-model-pricing h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.pricing-details {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pricing-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.pricing-item:last-child {
+  border-bottom: none;
+}
+
+.pricing-label {
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 0.875rem;
+}
+
+.pricing-value {
+  color: var(--text-primary, #fff);
+  font-weight: 500;
+}
+
+.cost-comparison {
+  margin-top: 2rem;
+}
+
+.cost-comparison h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 1rem;
+}
+
+.comparison-summary {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--card-bg, #252525);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-item span {
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 0.875rem;
+}
+
+.summary-item strong {
+  color: var(--text-primary, #fff);
+  font-size: 1.25rem;
+}
+
+.comparison-table {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+  margin-bottom: 1.5rem;
+}
+
+.comparison-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg, #252525);
+}
+
+.comparison-table thead {
+  background: var(--table-header-bg, #1a1a1a);
+}
+
+.comparison-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comparison-table td {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color, #333);
+  color: var(--text-primary, #fff);
+}
+
+.comparison-table .selected-row {
+  background: var(--selected-bg, rgba(99, 102, 241, 0.1));
+  border-left: 3px solid var(--primary-color, #6366f1);
+}
+
+.provider-name {
+  text-transform: capitalize;
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 0.875rem;
+}
+
+.ranking-cell {
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge.cheapest {
+  background: #10b981;
+  color: white;
+}
+
+.badge.rank {
+  background: var(--border-color, #333);
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.comparison-insights {
+  background: var(--card-bg, #252525);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.comparison-insights h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.comparison-insights ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comparison-insights li {
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 0.875rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.comparison-insights li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary-color, #6366f1);
+  font-size: 1.5rem;
+  line-height: 0.875rem;
+}
+
+.comparison-insights strong {
+  color: var(--text-primary, #fff);
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .token-usage-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .cost-calculator-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-table,
+  .comparison-table {
+    font-size: 0.875rem;
+  }
+
+  .usage-table th,
+  .usage-table td,
+  .comparison-table th,
+  .comparison-table td {
+    padding: 0.75rem;
+  }
+}
+

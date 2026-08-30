@@ -1,0 +1,60 @@
+# VSCode
+.vscode/
+.kilo
+
+# JetBrains IDE
+.idea/
+idea/
+.gigaide/
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# venvs and tools
+venv/
+.venv/
+.ruff_cache/
+
+# Logs
+*.log
+log/
+log_app/
+log_celery/
+
+# Environment
+app11/local.env
+app22/local.env
+#*.env
+#.env
+
+# nginx certificate
+nginx/cert/certificate.pem
+nginx/cert/private_key.pem
+
+# dataBase
+dock_up/
+fileStore/
+pg_db/
+db.sqlite3
+.DS_Store
+dist
+*.db
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

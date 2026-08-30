@@ -1,0 +1,70 @@
+[project]
+name = "chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+
+requires-python = ">=3.13"
+
+dependencies = [
+    "ruff>=0.14.10",
+    "black>=25.0.0",
+    "aiosqlite>=0.21.0",
+    "alembic>=1.16.4",
+    "fastapi-users[sqlalchemy]>=14.0.1",
+    "fastapi[standard]>=0.116.1",
+    "openai>=1.98.0",
+    "pydantic-settings>=2.10.1",
+]
+
+[tool.uv]
+package = false
+
+
+
+[tool.ruff.lint]
+ignore = [
+    "F401",
+    "E402",
+    "F541"
+]
+
+
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    ".vscode",
+    "__pypackages__",
+    "__pycache__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages"
+]
+
+
+
+
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+  # directories
+  \.venv
+  | venv
+  | \.git
+  | \.log
+  | \.mypy_cache
+  | \.tox
+  | build
+  | dist
+)/
+'''

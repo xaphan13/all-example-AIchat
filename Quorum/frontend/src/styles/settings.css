@@ -1,0 +1,548 @@
+/* ============================================
+   SETTINGS PAGE - DARK MODE UX-DRIVEN DESIGN
+   ============================================ */
+
+/* Overlay & Modal Container */
+.settings-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  background: linear-gradient(135deg, 
+    oklch(0.08 0.025 264 / 0.90), 
+    oklch(0.10 0.020 252 / 0.95));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: settingsOverlayFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes settingsOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-modal {
+  @apply max-w-5xl w-full flex flex-col;
+  max-height: 92vh;
+  background: oklch(0.12 0.015 264 / 0.98);
+  border: 1px solid oklch(0.22 0.020 264 / 0.8);
+  border-radius: 1.25rem;
+  box-shadow: 
+    0 0 0 1px oklch(0.18 0.015 264 / 0.3),
+    0 8px 32px -4px rgb(0 0 0 / 0.5),
+    0 24px 64px -12px rgb(0 0 0 / 0.7),
+    0 48px 128px -24px oklch(0.48 0.14 248 / 0.3);
+  animation: settingsModalSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes settingsModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header - Fixed at Top */
+.settings-header {
+  @apply flex items-start justify-between px-8 pt-8 pb-6 border-b shrink-0;
+  border-color: oklch(0.20 0.015 264 / 0.6);
+  background: linear-gradient(to bottom, 
+    oklch(0.14 0.015 264 / 0.95), 
+    oklch(0.12 0.015 264 / 0.9));
+  backdrop-filter: blur(8px);
+}
+
+.settings-header-content {
+  @apply flex items-start gap-4;
+}
+
+.settings-icon-wrapper {
+  @apply p-3 rounded-xl shrink-0;
+  background: linear-gradient(135deg, 
+    oklch(0.58 0.15 250 / 0.18), 
+    oklch(0.52 0.16 252 / 0.12));
+  border: 1px solid oklch(0.58 0.15 250 / 0.25);
+}
+
+.settings-icon {
+  @apply w-7 h-7;
+  color: oklch(0.72 0.16 252);
+}
+
+.settings-title {
+  @apply text-3xl font-bold tracking-tight;
+  color: oklch(0.95 0.005 264);
+  letter-spacing: -0.03em;
+  font-feature-settings: 'ss01' on, 'cv05' on;
+}
+
+.settings-subtitle {
+  @apply text-sm mt-1.5;
+  color: oklch(0.68 0.015 264);
+  font-weight: 500;
+}
+
+.settings-close-button {
+  @apply p-2.5 rounded-lg shrink-0 transition-all duration-200;
+  color: oklch(0.65 0.010 264);
+  background: transparent;
+}
+
+.settings-close-button:hover {
+  background: oklch(0.20 0.015 264);
+  color: oklch(0.85 0.010 264);
+  transform: scale(1.05);
+}
+
+.settings-close-button:active {
+  transform: scale(0.95);
+}
+
+/* Scrollable Content Area */
+.settings-content {
+  @apply overflow-y-auto px-8 py-6;
+  flex: 1 1 0%;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.30 0.015 264) transparent;
+}
+
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: oklch(0.30 0.015 264);
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.40 0.015 264);
+}
+
+/* Warning Banner - High Visual Priority */
+.settings-warning-banner {
+  @apply flex items-start gap-4 p-5 rounded-xl mb-6;
+  background: linear-gradient(135deg, 
+    oklch(0.25 0.08 85 / 0.3), 
+    oklch(0.22 0.07 80 / 0.2));
+  border: 1.5px solid oklch(0.55 0.12 80);
+  box-shadow: 
+    0 0 0 3px oklch(0.55 0.12 80 / 0.12),
+    0 4px 12px -2px oklch(0.55 0.12 80 / 0.25);
+}
+
+.settings-warning-icon {
+  @apply w-6 h-6 shrink-0 mt-0.5;
+  color: oklch(0.75 0.14 75);
+}
+
+.settings-warning-text {
+  @apply text-sm flex-1;
+  color: oklch(0.85 0.05 75);
+  line-height: 1.6;
+}
+
+/* Section Containers */
+.settings-section {
+  @apply rounded-xl p-6 mb-5;
+  background: oklch(0.15 0.015 264);
+  border: 1px solid oklch(0.22 0.020 264);
+  box-shadow: 
+    0 1px 2px 0 rgb(0 0 0 / 0.3),
+    0 2px 4px -1px rgb(0 0 0 / 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-section:hover {
+  border-color: oklch(0.28 0.020 264);
+  box-shadow: 
+    0 2px 4px 0 rgb(0 0 0 / 0.4),
+    0 4px 8px -2px rgb(0 0 0 / 0.5);
+}
+
+/* Primary Section - Enhanced Visual Weight */
+.settings-section-primary {
+  background: linear-gradient(135deg, 
+    oklch(0.16 0.020 264), 
+    oklch(0.14 0.018 258));
+  border: 1.5px solid oklch(0.58 0.15 250 / 0.25);
+  box-shadow: 
+    0 0 0 3px oklch(0.58 0.15 250 / 0.08),
+    0 2px 8px 0 rgb(0 0 0 / 0.4),
+    0 8px 16px -4px oklch(0.58 0.15 250 / 0.20);
+}
+
+.settings-section-primary:hover {
+  border-color: oklch(0.58 0.15 250 / 0.35);
+  box-shadow: 
+    0 0 0 3px oklch(0.58 0.15 250 / 0.12),
+    0 4px 12px 0 rgb(0 0 0 / 0.5),
+    0 12px 24px -6px oklch(0.58 0.15 250 / 0.28);
+}
+
+/* Section Header */
+.settings-section-header {
+  @apply flex items-start gap-3.5 mb-5 pb-4 border-b;
+  border-color: oklch(0.24 0.015 264 / 0.5);
+}
+
+.settings-section-icon-wrapper {
+  @apply p-2 rounded-lg shrink-0;
+  background: oklch(0.20 0.015 264);
+  border: 1px solid oklch(0.28 0.020 264);
+}
+
+.settings-section-icon-primary {
+  background: linear-gradient(135deg, 
+    oklch(0.58 0.15 250 / 0.15), 
+    oklch(0.52 0.16 252 / 0.12));
+  border-color: oklch(0.58 0.15 250 / 0.25);
+}
+
+.settings-section-icon {
+  @apply w-5 h-5;
+  color: oklch(0.75 0.015 264);
+}
+
+.settings-section-icon-primary .settings-section-icon {
+  color: oklch(0.72 0.16 252);
+}
+
+.settings-section-title {
+  @apply text-lg font-bold tracking-tight;
+  color: oklch(0.92 0.008 264);
+  letter-spacing: -0.02em;
+  font-feature-settings: 'ss01' on;
+}
+
+.settings-section-description {
+  @apply text-xs mt-0.5;
+  color: oklch(0.65 0.012 264);
+  font-weight: 500;
+}
+
+.settings-section-content {
+  @apply space-y-5;
+}
+
+/* Two-Column Grid for Secondary Sections */
+.settings-grid {
+  @apply grid gap-5;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+}
+
+/* Form Fields */
+.settings-field {
+  @apply space-y-2.5;
+}
+
+.settings-label {
+  @apply block text-sm font-semibold;
+  color: oklch(0.88 0.008 264);
+  letter-spacing: -0.01em;
+}
+
+.settings-label-required {
+  @apply flex items-center justify-between;
+}
+
+.settings-required-badge {
+  @apply text-xs font-medium px-2 py-0.5 rounded;
+  background: linear-gradient(135deg, 
+    oklch(0.58 0.15 250 / 0.18), 
+    oklch(0.52 0.16 252 / 0.15));
+  color: oklch(0.78 0.14 250);
+  border: 1px solid oklch(0.58 0.15 250 / 0.25);
+}
+
+.settings-label-inline {
+  @apply mb-0;
+}
+
+/* Input Styling */
+.settings-input-wrapper {
+  @apply relative;
+}
+
+.settings-input {
+  @apply w-full py-2.5 rounded-lg transition-all duration-200;
+  padding-left: 1rem;
+  padding-right: 4.5rem; /* Reserve space for validation icon + eyeball button */
+  background: oklch(0.10 0.015 264);
+  border: 1.5px solid oklch(0.25 0.020 264);
+  color: oklch(0.92 0.008 264);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  box-shadow: 
+    0 0 0 0 oklch(0.58 0.15 250 / 0),
+    0 1px 2px 0 rgb(0 0 0 / 0.3);
+}
+
+.settings-input::placeholder {
+  color: oklch(0.50 0.010 264);
+  font-weight: 400;
+}
+
+.settings-input:hover {
+  border-color: oklch(0.35 0.020 264);
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: oklch(0.58 0.15 250);
+  box-shadow: 
+    0 0 0 3px oklch(0.58 0.15 250 / 0.20),
+    0 2px 4px 0 rgb(0 0 0 / 0.4);
+}
+
+.settings-input:disabled {
+  @apply cursor-not-allowed;
+  background: oklch(0.18 0.015 264);
+  color: oklch(0.45 0.010 264);
+}
+
+.settings-input-actions {
+  @apply absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1;
+}
+
+.settings-input-button {
+  @apply p-2 rounded-md transition-all duration-200;
+  color: oklch(0.65 0.012 264);
+}
+
+.settings-input-button:hover {
+  background: oklch(0.22 0.015 264);
+  color: oklch(0.85 0.010 264);
+}
+
+.settings-input-button:active {
+  transform: scale(0.92);
+}
+
+/* Help Text */
+.settings-help-text {
+  @apply text-xs leading-relaxed;
+  color: oklch(0.65 0.012 264);
+  line-height: 1.6;
+}
+
+.settings-link {
+  @apply font-medium underline decoration-transparent transition-colors duration-200;
+  color: oklch(0.72 0.16 252);
+}
+
+.settings-link:hover {
+  color: oklch(0.82 0.18 252);
+  text-decoration-color: oklch(0.72 0.16 252);
+}
+
+/* Toggle Switch Field */
+.settings-toggle-field {
+  @apply flex items-center justify-between gap-4 py-3 px-4 rounded-lg;
+  background: oklch(0.13 0.015 264);
+  border: 1px solid oklch(0.20 0.020 264);
+}
+
+.settings-toggle-content {
+  @apply flex-1;
+}
+
+.settings-toggle {
+  @apply relative inline-flex items-center cursor-pointer shrink-0;
+}
+
+.settings-toggle-switch {
+  @apply w-12 h-6 rounded-full transition-all duration-300;
+  background: oklch(0.25 0.015 264);
+  border: 1.5px solid oklch(0.30 0.020 264);
+}
+
+.settings-toggle-switch::after {
+  content: '';
+  @apply absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-all duration-300;
+  background: oklch(0.50 0.010 264);
+  box-shadow: 
+    0 1px 2px 0 rgb(0 0 0 / 0.5),
+    0 2px 4px -1px rgb(0 0 0 / 0.6);
+}
+
+.settings-toggle input:checked ~ .settings-toggle-switch {
+  background: linear-gradient(135deg, 
+    oklch(0.58 0.15 250), 
+    oklch(0.52 0.16 252));
+  border-color: oklch(0.52 0.16 252);
+}
+
+.settings-toggle input:checked ~ .settings-toggle-switch::after {
+  transform: translateX(1.5rem);
+  background: oklch(0.98 0.005 264);
+  box-shadow: 
+    0 2px 4px 0 rgb(0 0 0 / 0.4),
+    0 4px 8px -2px oklch(0.48 0.14 248 / 0.5);
+}
+
+.settings-toggle input:focus-visible ~ .settings-toggle-switch {
+  outline: 2px solid oklch(0.58 0.15 250);
+  outline-offset: 2px;
+}
+
+.settings-toggle:hover .settings-toggle-switch {
+  border-color: oklch(0.38 0.020 264);
+}
+
+.settings-toggle input:checked:hover ~ .settings-toggle-switch {
+  border-color: oklch(0.60 0.18 252);
+}
+
+/* Footer - Sticky at Bottom */
+.settings-footer {
+  @apply flex items-center justify-between px-8 py-6 border-t shrink-0;
+  border-color: oklch(0.20 0.015 264 / 0.6);
+  background: linear-gradient(to top, 
+    oklch(0.14 0.015 264 / 0.95), 
+    oklch(0.12 0.015 264 / 0.9));
+  backdrop-filter: blur(8px);
+}
+
+/* Reset Button - Destructive Action */
+.settings-reset-button {
+  @apply flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200;
+  color: oklch(0.72 0.18 15);
+  background: transparent;
+  border: 1.5px solid transparent;
+}
+
+.settings-reset-button:hover {
+  background: oklch(0.52 0.18 15 / 0.12);
+  border-color: oklch(0.52 0.18 15 / 0.25);
+  color: oklch(0.82 0.20 15);
+  transform: translateY(-1px);
+}
+
+.settings-reset-button:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Action Buttons Group */
+.settings-action-buttons {
+  @apply flex items-center gap-3;
+}
+
+/* Cancel Button - Secondary Action */
+.settings-cancel-button {
+  @apply px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200;
+  color: oklch(0.75 0.010 264);
+  background: oklch(0.20 0.015 264);
+  border: 1.5px solid oklch(0.28 0.020 264);
+}
+
+.settings-cancel-button:hover {
+  background: oklch(0.24 0.015 264);
+  border-color: oklch(0.35 0.020 264);
+  color: oklch(0.88 0.008 264);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.5);
+}
+
+.settings-cancel-button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Save Button - Primary Action with Maximum Visual Weight */
+.settings-save-button {
+  @apply flex items-center gap-2.5 px-6 py-2.5 rounded-lg font-bold text-sm transition-all duration-200;
+  color: oklch(0.98 0.005 264);
+  background: linear-gradient(135deg, 
+    oklch(0.58 0.15 250), 
+    oklch(0.52 0.16 252));
+  border: 1.5px solid oklch(0.48 0.14 248);
+  box-shadow: 
+    0 0 0 0 oklch(0.58 0.15 250 / 0),
+    0 2px 4px 0 oklch(0.48 0.14 248 / 0.3),
+    0 4px 8px -2px oklch(0.48 0.14 248 / 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-save-button::before {
+  content: '';
+  @apply absolute inset-0;
+  background: linear-gradient(135deg, 
+    oklch(0.62 0.16 252 / 0.3), 
+    oklch(0.56 0.18 248 / 0.3));
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-save-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 0 0 4px oklch(0.58 0.15 250 / 0.20),
+    0 4px 8px 0 oklch(0.48 0.14 248 / 0.35),
+    0 8px 16px -4px oklch(0.48 0.14 248 / 0.5);
+}
+
+.settings-save-button:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.settings-save-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 100ms;
+}
+
+.settings-save-button:disabled {
+  @apply cursor-not-allowed;
+  background: oklch(0.25 0.015 264);
+  border-color: oklch(0.30 0.020 264);
+  color: oklch(0.50 0.010 264);
+  box-shadow: none;
+}
+
+/* Loading Spinner */
+.settings-spinner {
+  @apply w-5 h-5 border-2 rounded-full animate-spin;
+  border-color: oklch(0.98 0.005 264);
+  border-top-color: transparent;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .settings-modal {
+    @apply max-w-full mx-2;
+    max-height: 95vh;
+  }
+
+  .settings-header,
+  .settings-content,
+  .settings-footer {
+    @apply px-5;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-section {
+    @apply p-4;
+  }
+
+  .settings-action-buttons {
+    @apply flex-col-reverse w-full;
+  }
+
+  .settings-cancel-button,
+  .settings-save-button {
+    @apply w-full justify-center;
+  }
+}
+

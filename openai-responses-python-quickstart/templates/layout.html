@@ -1,0 +1,39 @@
+<!-- layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Assistants API Quickstart</title>
+    <meta name="description" content="A quickstart template using the OpenAI Assistants API with Python, FastAPI, Jinja2, and HTMX">
+    <link rel="icon" href="{{ url_for('static', path='openai.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <link rel="favicon" href="{{ url_for('static', path='favicon.png') }}">
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav-links">
+        {% if request.url.path != url_for('read_home') %}
+          <a href="{{ url_for('read_home') }}">Home</a>
+        {% endif %}
+        {% if request.url.path != url_for('read_setup') %}
+          <a href="{{ url_for('read_setup') }}">Setup</a>
+        {% endif %}
+      </div>
+      <img class="logo" src="{{ url_for('static', path='openai.svg') }}" alt="OpenAI Logo" />
+    </nav>
+    <main class="main">
+      <div class="container">
+        {% block content %}
+          <!-- Content will be injected here -->
+        {% endblock %}
+      </div>
+    </main>
+    <script src="{{ url_for('static', path='htmx.min.js') }}"></script>
+    <script src="{{ url_for('static', path='sse.js') }}"></script>
+    <!-- Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="{{ url_for('static', path='stream-md.js') }}"></script>
+    <script src="{{ url_for('static', path='audio-recorder.js') }}"></script>
+  </body>
+</html>

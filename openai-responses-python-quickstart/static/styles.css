@@ -1,0 +1,1107 @@
+:root {
+  --max-width: 1100px;
+  --border-radius: 12px;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+    "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
+    "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  color: rgb(var(--foreground-rgb));
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  color: blue;
+}
+
+ul,
+ol {
+  padding-left: 20px;
+  white-space: normal;
+}
+
+li {
+  white-space: normal;
+}
+
+li > ul {
+  margin-bottom: 0;
+}
+
+pre {
+  margin: -4px -16px;
+  padding: 20px;
+  white-space: pre-wrap;
+  background-color: #e4e4e4;
+  color: black;
+}
+
+.warnings {
+  position: absolute;
+  top: 21%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 300px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+  /* Removed absolute positioning, handled by nav flexbox */
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  max-width: 1200px;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.category {
+  color: black;
+  display: flex;
+  font-size: 1em;
+  border-radius: 32px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: #efefef;
+  cursor: pointer;
+  max-width: 600px;
+  width: 120px;
+  height: 120px;
+  padding: 20px;
+  transition: background-color 0.3s ease;
+  font-weight: 500;
+}
+
+.category:hover {
+  background-color: #e3e3eb;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 700px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+  height: calc(100% - 40px);
+  gap: 20px;
+  margin: 20px;
+  justify-content: space-between;
+}
+
+/* add 'height: 50%;' if categories.name == "all" */
+.column > * {
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  flex: 1;
+}
+
+.chatContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+}
+
+.chat {
+  max-width: 600px;
+  width: 100%;
+  height: 100%;
+}
+
+.assistantMessage {
+  white-space: pre-wrap;
+}
+
+.toolCall {
+  white-space: pre-wrap;
+  cursor: pointer;
+}
+
+.toolCall summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolCall summary::before {
+  content: "▶";
+  font-size: 0.65em;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.toolCall[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.toolCallDetails {
+  white-space: pre-wrap;
+  margin-top: 6px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.toolCallArgs {
+  margin: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+
+.fileViewer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  background-color: #efefef;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.filesList {
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.grow {
+  flex-grow: 1;
+}
+
+.fileEntry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ececf1;
+  gap: 16px;
+  width: 100%;
+}
+
+.fileName {
+  flex-grow: 1;
+}
+.fileStatus {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.fileDeleteIcon {
+  cursor: pointer;
+}
+
+.fileUploadContainer {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.fileUploadBtn {
+  background-color: #000;
+  color: white;
+  padding: 8px 24px;
+  border-radius: 32px;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.fileUploadInput {
+  display: none;
+}
+
+.title {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.fileName {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.weatherBGCloudy {
+  background: linear-gradient(to top right, #b6c6c9, #8fa3ad);
+}
+
+.weatherBGSunny {
+  background: linear-gradient(to bottom left, #ffffd0, #007cf0);
+}
+
+.weatherBGRainy {
+  background: linear-gradient(to top, #647d8e, #a8c0c0);
+}
+
+.weatherBGSnowy {
+  background: linear-gradient(to bottom, #ffffff, #acc2d9);
+}
+
+.weatherBGWindy {
+  background: linear-gradient(to right, #c4e0e5, #4ca1af);
+}
+
+.weatherWidget {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  padding: 20px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.weatherWidgetData {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.weatherEmptyState {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(
+    --emptyStateBackground,
+    linear-gradient(to top right, #b6c6c9, #8fa3ad)
+  );
+}
+
+.weatherWidgetData h2 {
+  font-size: 8em;
+  font-weight: 500;
+}
+
+.warningsContainer {
+  padding: 20px;
+  /* background-color: #d95c5c; */
+  /* outline: 8px solid #4caf50; */
+  background-color: #fff;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 12px;
+  color: #000;
+}
+
+.empty,
+.assistantId {
+  background-color: #ffffff;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 80%;
+  border: 1px solid #ccc;
+}
+
+.warningsButton {
+  padding: 8px 24px;
+  background-color: #000;
+  color: white;
+  border: none;
+  font-size: 1em;
+  border-radius: 60px;
+  cursor: pointer;
+}
+.warningsContainer h1 {
+  font-size: 1.5em;
+  font-weight: 600;
+}
+.warningsResult {
+  border-radius: 8px;
+  padding: 0 8px;
+  padding: 8px 24px;
+  background-color: #000;
+  color: white;
+  font-size: 1em;
+  border-radius: 60px;
+}
+
+.warningsMessage {
+  margin: 20px 0;
+  font-size: 1em;
+}
+.warningsMessage span {
+  background-color: #efefef;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.chatContainer {
+  display: flex;
+  flex-direction: column-reverse;
+  height: 100%;
+  width: 100%;
+}
+
+.inputForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 10px;
+  padding-bottom: 40px;
+  order: 1;
+}
+
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+/* Image upload button */
+.imageUploadLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: calc(1em + 32px + 4px);
+  cursor: pointer;
+  color: #666;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: color 0.2s;
+}
+
+.imageUploadLabel:hover {
+  color: #000;
+}
+
+.imageUploadInput {
+  display: none;
+}
+
+/* Mic button */
+.micButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: calc(1em + 32px + 4px);
+  cursor: pointer;
+  color: #666;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  transition: color 0.2s;
+  padding: 0;
+  font-size: inherit;
+}
+
+.micButton:hover {
+  color: #000;
+}
+
+.micButton.recording {
+  color: #e53e3e;
+  animation: micPulse 1.5s infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Image preview above the input row */
+.imagePreview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.imagePreview img {
+  max-height: 80px;
+  max-width: 120px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.imagePreviewRemove {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  color: #999;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.imagePreviewRemove:hover {
+  color: #333;
+}
+
+/* User message wrapper for messages with images */
+.userMessageWrapper {
+  align-self: flex-end;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Thumbnail row above the chat bubble */
+.userImageThumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* Thumbnail in user messages */
+.userImageThumb {
+  max-height: 120px;
+  max-width: 200px;
+  border-radius: 8px;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.userImageThumb:hover {
+  opacity: 0.8;
+}
+
+/* Full-size image preview overlay */
+.imagePreviewOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.imagePreviewOverlay.active {
+  display: flex;
+}
+
+.imagePreviewOverlay img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.imagePreviewClose {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  font-size: 2em;
+  color: white;
+  cursor: pointer;
+  background: none;
+  border: none;
+  line-height: 1;
+  padding: 4px 12px;
+}
+
+.imagePreviewClose:hover {
+  color: #ccc;
+}
+
+.input {
+  flex-grow: 1;
+  padding: 16px 24px;
+  margin-right: 10px;
+  border-radius: 60px;
+  border: 2px solid transparent;
+  font-size: 1em;
+  background-color: #efefef;
+  resize: none; /* Prevent manual resize */
+  overflow-y: hidden; /* Hide scrollbar */
+  min-height: calc(1em + 32px + 4px); /* font-size + padding + border */
+  height: auto; /* Allow it to grow */
+  line-height: 1.5; /* Adjust for better multi-line readability */
+}
+
+.input:focus {
+  outline: none !important;
+  border-color: #000;
+  background-color: white;
+}
+
+.button {
+  padding: 8px 24px;
+  background-color: #000;
+  color: white;
+  border: none;
+  font-size: 1em;
+  height: calc(1em + 32px + 4px); /* font-size + padding + border */
+  border-radius: 60px; /* Removed duplicate border-radius property */
+}
+
+.button:disabled {
+  background-color: lightgrey;
+}
+
+.messages {
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  order: 3;
+}
+
+.assistantMessage:empty {
+  display: none;
+}
+
+.userMessage,
+.assistantMessage,
+.codeMessage,
+.toolCall {
+  margin: 8px 0;
+  padding: 8px 16px;
+
+  align-self: flex-start;
+  border-radius: 15px;
+  max-width: 80%;
+  overflow-wrap: break-word;
+}
+
+.assistantMessage img,
+.imageOutput img {
+  max-width: 100%;
+  margin: 8px 0px 8px 0px;
+  border-radius: 8px;
+}
+
+.userMessage {
+  align-self: flex-end;
+  color: #fff;
+  background-color: #000;
+}
+
+.assistantMessage {
+  background-color: #efefef;
+}
+
+/* MCP approval UI spacing */
+.approvalCard { margin: 10px 0; padding: 8px 10px; border-radius: 8px; background: #f7f7f7; }
+.approvalHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.approvalMeta { display: flex; align-items: center; gap: 12px; font-size: 1em; color: #444; }
+.approvalMeta code { font-size: 1em; }
+@media (max-width: 600px) {
+  .approvalHeader { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .approvalMeta { margin-top: 4px; }
+}
+.approvalDetails { margin: 8px 0; }
+.approvalArgs { margin-top: 6px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #e2e2e2; }
+.approvalActions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.approvalActions form { display: flex; flex-direction: column; gap: 8px; }
+.approvalActions .buttons { display: inline-flex; gap: 8px; }
+
+.codeMessage {
+  padding: 10px 16px;
+  background-color: #e9e9e9;
+  font-family: monospace;
+  counter-reset: line;
+}
+
+.codeMessage > div {
+  margin-top: 4px;
+}
+
+.codeMessage span {
+  color: #b8b8b8;
+  margin-right: 8px;
+}
+
+.inputWrapper {
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Error/Warning blocks used by tool templates */
+.toolError {
+  border-radius: var(--border-radius);
+  padding: 10px 12px;
+  background: #fde8e8;
+  color: #7a1f1f;
+  border: 1px solid #f5b5b5;
+}
+
+.toolWarning {
+  border-radius: var(--border-radius);
+  padding: 10px 12px;
+  background: #fff8e1;
+  color: #6b4e00;
+  border: 1px solid #ffe08a;
+}
+
+/* Generic JSON fallback renderer */
+.toolOutput pre {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.7);
+  color: #333;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  max-width: 80ch;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Weather widget layout refinements */
+.weatherContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  gap: 12px;
+  width: fit-content;
+  height: fit-content;
+  color: #333;
+}
+
+.weatherContainer h2,
+.weatherContainer p {
+  margin: 0;
+  padding: 0 10px;
+  flex: 1;
+  text-align: center;
+  color: #333;
+}
+
+.location h2 {
+  margin: 0 0 6px 0;
+}
+
+.reports {
+  display: grid;
+  grid-template-columns: repeat( auto-fit, minmax(160px, 1fr) );
+  gap: 8px 12px;
+}
+
+.weatherReport {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--border-radius);
+  padding: 8px;
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+  .toolOutput pre { max-width: 100%; }
+  .weatherContainer { flex-direction: column; align-items: flex-start; }
+  .weatherContainer h2,
+  .weatherContainer p { text-align: left; padding: 5px 0; }
+}
+
+/* Code Interpreter Image Styles */
+.code-interpreter-image {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.errorMessage {
+  color: #e53e3e;
+  font-size: 0.875rem;
+}
+
+/* Network Error Banner */
+.networkError {
+  display: none;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 8px 0;
+  width: fit-content;
+}
+
+/* --- Nav --- */
+.nav {
+  position: relative; /* Context for absolute logo if needed later */
+  display: flex;
+  align-items: center; /* Vertically center items */
+  justify-content: flex-end; /* Pushes items to the right */
+  gap: 16px; /* Space between nav-links div and logo */
+  padding: 16px; /* Match logo margin */
+  height: 64px; /* Logo height (32) + top/bottom padding (16*2) */
+  box-sizing: border-box;
+  width: 100%;
+  background-color: #000; /* Black background */
+  border-bottom: 1px solid #eee; /* Optional: separator */
+}
+
+.nav-links {
+    display: flex;
+    gap: 16px; /* Space between links */
+}
+
+.nav a {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+/* --- End Nav --- */
+
+.status-message {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.status-message.success {
+  color: green;
+}
+
+.status-message.error {
+  color: red;
+}
+
+/* --- Setup Page Styles --- */
+.setupContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 600px;
+  width: 100%;
+  padding: 40px 20px;
+}
+
+/* Style for the main sections — card appearance */
+.setupSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  background: #fafafa;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.setupSection h3 {
+  width: 100%;
+  text-align: left;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e2e2;
+  margin: 0;
+}
+
+/* Style for forms within setup sections */
+.setupSection form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Style specifically the div holding checkboxes */
+.setupSection form > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Fieldset groups within setup cards */
+.setupFieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setupFieldset legend {
+  font-weight: 600;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+
+/* Style labels containing checkboxes */
+.setupSection label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.setupMessage {
+  font-size: 1.1em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+#file-list-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+  }
+
+.fileList {
+  list-style: none;
+  padding: 0;
+  width: 100%; /* Ensure list takes full width */
+  max-width: 550px; /* Match setup form max-width for consistency */
+}
+
+.fileItem { 
+  background-color: #f9f9f9; 
+  border: 1px solid #ddd; 
+  margin-bottom: 5px; 
+  padding: 8px 12px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  border-radius: 4px; /* Add slight rounding */
+}
+
+.fileItem span:first-child { /* Target the filename/status span */
+  flex-grow: 1; /* Allow text to take available space */
+  margin-right: 10px; /* Space before delete button */
+  word-break: break-all; /* Prevent long filenames overflowing */
+}
+
+.deleteButton { 
+  background-color: #dc3545 !important; /* Use !important to override base .button style if needed */
+  color: white !important; 
+  border: none; 
+  padding: 5px 10px !important; /* Ensure padding is applied */
+  cursor: pointer; 
+  border-radius: 3px !important; /* Ensure border-radius is applied */
+  font-size: 0.9em !important; /* Make button slightly smaller */
+  /* Remove base button styles that might conflict */
+  min-width: auto; 
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.deleteButton:hover { 
+  background-color: #c82333 !important; 
+}
+
+/* Reuse existing .errorMessage style? Or keep specific? Let's keep specific for now */
+.fileItem .errorMessage { 
+  color: #c82333; /* Slightly darker red */
+  font-size: 0.8em; 
+  margin-left: 10px; 
+  font-style: italic;
+}
+
+/* Original selector: .centered-button-container */
+/* New selector increases specificity to override .setupSection form > div */
+.centered-button-container {
+  display: flex;
+  justify-content: center; /* Center button horizontally */
+  align-items: center; /* Center button vertically (good practice) */
+  width: 100%;
+  margin-top: 10px; /* Optional: add some space above the button */
+}
+
+.button__loader {
+  display: inline-block; /* Or flex, if you want to align dots easily */
+  vertical-align: middle; /* Helps align with text if it were visible */
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  background-color: currentColor; /* Uses the button's text color */
+  border-radius: 50%;
+  animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.0);
+  }
+}
+
+.dots{display:flex;gap:4px}
+.dots div{width:8px;height:8px;background:#000;border-radius:50%;animation:bounce 1.4s infinite both}
+.dots div:nth-child(1){animation-delay:-.32s}
+.dots div:nth-child(2){animation-delay:-.16s}
+@keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+
+/* File carousel for code interpreter artifacts */
+.fileCarousel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  max-width: 600px;
+  width: 100%;
+  order: 2;
+}
+
+.fileCarousel:empty {
+  display: none;
+  padding: 0;
+}
+
+.fileCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  background: #f9f9f9;
+  max-width: 140px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.fileCard:hover {
+  background: #efefef;
+}
+
+.fileCard img {
+  max-width: 120px;
+  max-height: 80px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.fileCardIcon {
+  font-size: 2em;
+  line-height: 1;
+  color: #666;
+}
+
+.fileCardName {
+  font-size: 0.75em;
+  color: #555;
+  text-align: center;
+  word-break: break-all;
+  max-width: 120px;
+}
+
+/* Optional: Adjust button padding if loader makes it too wide/narrow */
+/*
+.button {
+  position: relative; // If you need to absolutely position loader elements
+}
+*/

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Chat Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(-45deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-effect:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .floating-card {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 floating-card">
+                <i data-lucide="message-circle" class="w-10 h-10 text-white"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-3">Welcome Back</h1>
+            <p class="text-white/80 text-lg">Sign in to your AI Chat account</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="glass-effect rounded-2xl p-10">
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-white mb-3">Email Address</label>
+                    <input type="email" id="email" name="email" required 
+                           class="w-full px-5 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400/50 input-focus transition-all duration-300">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-white mb-3">Password</label>
+                    <input type="password" id="password" name="password" required 
+                           class="w-full px-5 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400/50 input-focus transition-all duration-300">
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-white to-purple-100 text-purple-600 font-bold py-4 rounded-xl hover:from-purple-100 hover:to-white transition-all duration-300 btn-glow text-lg">
+                    Sign In →
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-white/80 text-base">
+                    Don't have an account? 
+                    <a href="/signup" class="text-white font-bold hover:text-purple-200 transition-colors duration-300">Create one now</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mt-6 p-4 bg-red-500/20 border border-red-400/50 rounded-xl text-white text-center backdrop-blur-sm">
+            <i data-lucide="alert-circle" class="w-5 h-5 inline-block mr-2"></i>
+            <span id="errorText"></span>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+
+                if (response.ok) {
+                    window.location.href = '/chat';
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
