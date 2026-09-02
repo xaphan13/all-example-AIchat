@@ -18,7 +18,7 @@
 
 ### Код: Настройка стратегий и транспортов
 
-В файле `AI-Chatbot/app/api/v1/users.py` можно увидеть, как гибко настраивается `fastapi-users`:
+В файле `../AI-Chatbot/app/api/v1/users.py` можно увидеть, как гибко настраивается `fastapi-users`:
 
 ```python
 from fastapi_users.authentication import (
@@ -62,7 +62,7 @@ login_router = fastapi_users.get_auth_router(cookie_auth_backend)
 register_router = fastapi_users.get_register_router(UserRead, UserCreate)
 ```
 
-Такой подход позволяет веб-интерфейсу (на базе шаблонов Jinja2, находящихся в `AI-Chatbot/app/templates/`) отправлять логин и пароль и получать куки `fastapiusersauth`, которые браузер автоматически прикрепляет к следующим запросам.
+Такой подход позволяет веб-интерфейсу (на базе шаблонов Jinja2, находящихся в `../AI-Chatbot/app/templates`) отправлять логин и пароль и получать куки `fastapiusersauth`, которые браузер автоматически прикрепляет к следующим запросам.
 
 ---
 
@@ -72,7 +72,7 @@ register_router = fastapi_users.get_register_router(UserRead, UserCreate)
 
 ### Роутер логина и создание JWT
 
-В файле `rag-knowledge-base-chatbot/app/api/routes/auth.py` реализован классический метод `/login`, который проверяет хэш пароля и возвращает `access_token`:
+В файле `../rag-knowledge-base-chatbot/app/api/routes/auth.py` реализован классический метод `/login`, который проверяет хэш пароля и возвращает `access_token`:
 
 ```python
 @router.post("/login", response_model=LoginResponse)

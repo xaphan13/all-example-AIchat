@@ -12,7 +12,7 @@
 
 ### Генерация сессии при подключении
 
-Когда клиент устанавливает соединение по WebSocket, сервер (в `GroqStreamChain/server.py`) автоматически генерирует уникальный `session_id` с использованием библиотеки `uuid`.
+Когда клиент устанавливает соединение по WebSocket, сервер (в `../GroqStreamChain/server.py`) автоматически генерирует уникальный `session_id` с использованием библиотеки `uuid`.
 
 ```python
 import uuid
@@ -44,7 +44,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 ### Сохранение на клиенте
 
-На стороне клиента (в `GroqStreamChain/static/js/main.js`) браузер получает этот `session_id` и сохраняет его в `localStorage`. Это позволяет в будущем, при необходимости (например, при обрыве связи), отправить этот ID обратно на сервер и восстановить контекст чата.
+На стороне клиента (в `../GroqStreamChain/static/js/main.js`) браузер получает этот `session_id` и сохраняет его в `localStorage`. Это позволяет в будущем, при необходимости (например, при обрыве связи), отправить этот ID обратно на сервер и восстановить контекст чата.
 
 ```javascript
 ws.onmessage = function(event) {
@@ -67,7 +67,7 @@ ws.onmessage = function(event) {
 
 ## 2. Управление соединениями WebSockets в Quorum
 
-Проект **Quorum** имеет более сложную и масштабируемую архитектуру. Работа с веб-сокетами вынесена в отдельную инфраструктурную директорию `Quorum/backend/src/infrastructure/websocket/manager.py`.
+Проект **Quorum** имеет более сложную и масштабируемую архитектуру. Работа с веб-сокетами вынесена в отдельную инфраструктурную директорию `../Quorum/backend/src/infrastructure/websocket/manager.py`.
 
 ### Разделение connection_id и session_id
 
