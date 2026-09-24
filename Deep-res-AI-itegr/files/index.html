@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Web Chat</title>
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --panel: #ffffff;
+    --ink: #1f2421;
+    --muted: #6b7570;
+    --accent: #2f6f5e;
+    --user-bubble: #e7e2d6;
+    --bot-bubble: #eaf1ee;
+    --border: #dcd8cd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+    background: var(--bg);
+    color: var(--ink);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 15px; margin: 0; letter-spacing: 0.02em; font-weight: 600; }
+  header p { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .msg.user { align-self: flex-end; background: var(--user-bubble); }
+  .msg.bot { align-self: flex-start; background: var(--bot-bubble); border: 1px solid var(--border); }
+  form {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--panel);
+  }
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 4px;
+    background: var(--accent);
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>ai-chat / websocket demo</h1>
+    <p>session: <span id="session-id"></span></p>
+  </header>
+  <div id="chat"></div>
+  <form id="form">
+    <input id="input" autocomplete="off" placeholder="Спросите что-нибудь…" />
+    <button id="send">Отправить</button>
+  </form>
+
+<script>
+  const sessionId = crypto.randomUUID();
+  document.getElementById('session-id').textContent = sessionId;
+
+  const chat = document.getElementById('chat');
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws/chat/${sessionId}`);
+
+  let currentBotBubble = null;
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  ws.onopen = () => {
+    addMessage('bot', 'Соединение установлено. Задайте вопрос.');
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'chunk') {
+      if (!currentBotBubble) currentBotBubble = addMessage('bot', '');
+      currentBotBubble.textContent += data.content;
+      chat.scrollTop = chat.scrollHeight;
+    } else if (data.type === 'done') {
+      currentBotBubble = null;
+      sendBtn.disabled = false;
+    } else if (data.type === 'error') {
+      addMessage('bot', `⚠ ${data.content}`);
+      currentBotBubble = null;
+      sendBtn.disabled = false;
+    }
+  };
+
+  ws.onerror = () => addMessage('bot', '⚠ Ошибка соединения с сервером.');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage('user', text);
+    ws.send(text);
+    input.value = '';
+    sendBtn.disabled = true;
+  });
+</script>
+</body>
+</html>
