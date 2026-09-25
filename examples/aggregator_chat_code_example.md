@@ -1,25 +1,27 @@
-# Отправка запросов в OpenRouter и подобные агрегаторы: переносимый пример чата
+# Отправка запросов в OpenRouter и подобные агрегаторы: пример чата
 
-> Дата: 21.09.2026
-> Код: `openrouter_chat_example` — запускается и копируется в другой проект
+> Дата: 24.09.2026
+> Код: `examples/openrouter_chat_example` — запускается через `uv` и копируется в другой проект
 > Часть цикла: Часть 1 — инвентаризация проектов, Часть 2 — обзор библиотек,
-> Часть 3 — надёжность и практика; этот документ — пример реализации целиком.
+> Часть 3 — надёжность и практика; этот документ — разбор примера целиком.
 
 ## 1. Что здесь собрано
 
-Готовый пример чата к **OpenAI-совместимому агрегатору**: OpenRouter из коробки,
+Пример чата к **OpenAI-совместимому агрегатору**: OpenRouter из коробки,
 любой аналог (LiteLLM Proxy, Portkey, YesScale, Together, self-hosted шлюз) — сменой
-адреса. Цель — перенос: один контракт, две реализации за ним, без привязки к фреймворку.
+адреса. Цель — показать принцип: один контракт, две реализации за ним, без привязки
+к фреймворку. Это учебный пример, а не продакшен-библиотека.
 
 ```
 examples/openrouter_chat_example/
 ├── chat.py             # контракт: интерфейс, модели данных, ошибка, фабрика
 ├── httpx_client.py     # реализация на httpx — видно весь протокол
 ├── openai_client.py    # реализация на официальном SDK OpenAI
-├── config.py           # пример чтения настроек (ключ, адрес, модель, fallback)
+├── config.py           # настройки на pydantic-settings (ключ, адрес, модель, fallback)
 ├── example_usage.py    # три сценария: один ответ, стриминг, fallback-модели
-├── requirements.txt
-└── README.md           # англоязычная версия этого материала
+├── pyproject.toml      # зависимости для uv
+├── .env.example        # шаблон переменных окружения
+└── README.md           # краткая версия этого материала
 ```
 
 Ключевая идея переносимости: **приложение знает только `ChatClient`**. Меняется
@@ -48,13 +50,21 @@ class ChatClient(ABC):
         """Закрыть соединения. Клиент создаётся один раз на процесс."""
 ```
 
-Плюс `stream_with_usage(...)` — поток, последним элементом которого идёт `Usage`.
-Он не абстрактный: базовая реализация просто не отдаёт расход, а умеющие —
-переопределяют.
+Всего два метода плюс закрытие. Расход токенов в стриме намеренно не собирается:
+это усложнило бы контракт (пришлось бы различать текст и `Usage` в одном потоке)
+ради детали, которая к принципу устройства чата не относится.
 
-Модели данных — `ChatMessage`, `ChatResult`, `Usage` — плоские датаклассы.
-`ChatResult` несёт не только текст, но и то, что нужно продакшену: имя реально
-ответившей модели, расход токенов, выбранного агрегатором провайдера, `finish_reason`.
+Модели данных разные по природе, и это отражено в их типах:
+
+- `ChatMessage` — **модель pydantic**. Это данные из внешнего мира: роль приходит
+  из пользовательского ввода, и её лучше проверить до запроса, а не получить 400
+  от провайдера.
+- `Usage` и `ChatResult` — **датаклассы**. Это выходные данные, валидация им не
+  нужна, а pydantic добавил бы вес без пользы.
+
+`ChatResult` несёт не только текст, но и то, что нужно для работы с ответом:
+имя реально ответившей модели, расход токенов, выбранного агрегатором провайдера,
+`finish_reason`.
 
 **Ошибки не глотаются.** Вместо `except Exception: return None` (как в
 `llm-council-karpathy`) контракт требует `ProviderError` с тремя полезными полями:
@@ -98,56 +108,62 @@ self._client = httpx.AsyncClient(
 Таймаут дифференцирован: `connect` — короткий, `read` — на паузу между чанками
 стрима, общий — на весь запрос.
 
-### Повторы с уважением к `Retry-After`
+### Ошибки: один тип на все реализации
 
 ```python
 RETRYABLE_STATUS_CODES = frozenset({408, 409, 425, 429, 500, 502, 503, 504})
 
-for attempt in range(1, self._max_retries + 2):
-    ...  # один POST
+@staticmethod
+def _raise_for_status(response: httpx.Response) -> None:
+    """Превратить HTTP-ошибку в `ProviderError` с признаком временности."""
     if response.status_code < 400:
-        return response
-    last_error = ProviderError(..., retryable=response.status_code in RETRYABLE_STATUS_CODES)
-    if not last_error.retryable:
-        raise last_error          # 400/401/422 повторять бессмысленно
-    retry_after = self._retry_after_seconds(response)   # агрегатор сам сказал, сколько ждать
-    if retry_after is not None:
-        await asyncio.sleep(retry_after)
-        continue
-    delay = self._retry_backoff * (2 ** (attempt - 1))  # экспоненциальный backoff
-    await asyncio.sleep(delay)
+        return
+    raise ProviderError(
+        f"Агрегатор вернул {response.status_code}: {response.text[:500]}",
+        status_code=response.status_code,
+        retryable=response.status_code in RETRYABLE_STATUS_CODES,
+    )
 ```
 
-Главное различие с репозиторием: там повторов нет нигде, кроме RAG-чатбота, где
-backoff **линейный** (`backoff_ms * attempt`). Здесь — экспоненциальный и с оглядкой
-на подсказку сервера.
+Повторов здесь нет намеренно: клиент делает один запрос, а на временный отказ
+реагирует вызывающий код (сценарий с fallback-моделями ниже). Так пример не
+обрастает политикой повторов, `Retry-After` и экспоненциальным backoff — это темы
+надёжности, а не принципа устройства чата (разбор — в
+`aggregators_part3_reliability_and_practice.md`).
 
-### Стриминг: две тонкости агрегаторов
+`retryable` при этом сохраняется: по нему вызывающий код решает, менять ли модель
+(429/5xx) или показать ошибку (400/401/422).
+
+### Стриминг: разбор SSE руками
 
 ```python
 async with self._client.stream("POST", "/chat/completions", json=payload) as response:
+    if response.status_code >= 400:
+        body = (await response.aread()).decode("utf-8", "replace")
+        raise ProviderError(...)            # включая retryable
+
     async for line in response.aiter_lines():
-        chunk = self._parse_sse_line(line)      # None для пустых строк и [DONE]
-        if chunk.get("usage"):                  # usage приходит ровно один раз
-            final_usage = Usage(...)
+        chunk = self._parse_sse_line(line)  # None для пустых строк и [DONE]
+        if chunk is None:
+            continue
         for choice in chunk.get("choices") or []:
             text = (choice.get("delta") or {}).get("content")
             if text:
-                emitted_text = True
                 yield text
 ```
 
-Тонкость первая: у OpenRouter usage приходит **в последнем чанке перед `[DONE]`**,
-и этот чанк содержит непустой `choices` (в отличие от спецификации OpenAI) — поэтому
-он не отбрасывается, а разбирается на общих основаниях.
+Что видно из этого кода и полезно понять про агрегаторы:
 
-Тонкость вторая: **прерванный стрим не переигрывается, если текст уже ушёл клиенту** —
-иначе пользователь увидит дубли. Отсюда флаг `emitted_text` в условии повтора:
-
-```python
-if emitted_text or not error.retryable or retries_left <= 0:
-    raise
-```
+- **`stream=True` меняет тип ответа**, а не только способ доставки: вместо одного
+  JSON приходит поток строк SSE (`data: {...}`), который надо разбирать самому.
+- **`[DONE]` — служебная строка**, как и пустые строки-разделители: `_parse_sse_line`
+  возвращает для них `None`.
+- **В стриме важен только `delta.content`** — накопление текста уже сделано за вас
+  на стороне сервиса.
+- Расход токенов в стриме здесь не собирается, потому что usage приходит в
+  последнем чанке (у OpenRouter — перед `[DONE]`, и этот чанк, вопреки спецификации
+  OpenAI, содержит непустой `choices`). Для продакшена это делается через
+  `stream_options={"include_usage": True}` у SDK.
 
 ---
 
@@ -157,45 +173,37 @@ if emitted_text or not error.retryable or retries_left <= 0:
 self._client = AsyncOpenAI(
     api_key=api_key,
     base_url=base_url.rstrip("/"),
+    # Заголовки атрибуции агрегатора: задаются один раз на весь клиент.
     default_headers={"HTTP-Referer": app_url, "X-Title": app_title},
     timeout=timeout_seconds,
-    max_retries=max_retries,
 )
 ```
 
-Здесь два важных решения:
+Ключевое отличие от httpx-реализации: **заголовки атрибуции задаются через
+`default_headers`** — то, чего нет ни в `llm-council-karpathy`, ни в Quorum.
+Устанавливаются один раз на клиент, а не на каждый запрос.
 
-1. **Заголовки атрибуции заданы через `default_headers`** — то, чего нет ни в
-   `llm-council-karpathy`, ни в Quorum. Устанавливаются один раз на клиент.
-2. **Своего цикла повторов нет.** SDK сам повторяет 2 раза с экспоненциальным
-   backoff на 408/409/429/5xx и сетевые ошибки. Ретраи должны жить на одном уровне —
-   иначе попытки перемножаются.
-
-Приведение ошибок к общему типу:
+Приведение `ChatMessage` к тому, что ждёт SDK, — обычный словарь:
 
 ```python
-def _as_provider_error(error: Exception, model: str) -> ProviderError:
-    if isinstance(error, APIStatusError):
-        return ProviderError(..., status_code=error.status_code, model=model,
-                             retryable=error.status_code in RETRYABLE_STATUS_CODES)
-    if isinstance(error, APITimeoutError):
-        return ProviderError(..., model=model, retryable=True)
-    return ProviderError(..., model=model, retryable=True)
+async def chat(self, messages, *, model, temperature=0.7, max_tokens=1024) -> ChatResult:
+    response = await self._client.chat.completions.create(
+        model=model,
+        messages=[m.model_dump() for m in messages],
+        temperature=temperature,
+        max_completion_tokens=max_tokens,   # не max_tokens — см. ниже
+    )
+    ...
 ```
 
-Для получения расхода в стриме добавлен `stream_options={"include_usage": True}`:
+Два практических момента, которые стоит запомнить:
 
-```python
-stream = await self._client.chat.completions.create(
-    ..., stream=True, stream_options={"include_usage": True},
-)
-async for chunk in stream:
-    if chunk.usage is not None:           # чанк с usage может быть без choices
-        yield Usage(chunk.usage.prompt_tokens or 0, chunk.usage.completion_tokens or 0)
-    for choice in chunk.choices or []:
-        if choice.delta.content:
-            yield choice.delta.content
-```
+- **`max_tokens` и `max_completion_tokens` — разные параметры.** Разные модели
+  принимают разные; httpx-клиент шлёт `max_tokens`, SDK-клиент —
+  `max_completion_tokens`.
+- **Повторы SDK и свой цикл несовместимы.** SDK сам повторяет запросы на 429/5xx
+  и сетевые ошибки. Если добавить свой цикл, попытки перемножатся. Здесь повторов
+  нет ни там, ни там — решение о смене модели принимает вызывающий код.
 
 ---
 
@@ -221,28 +229,34 @@ def create_client(backend: str, *, api_key: str, base_url: str, **kwargs) -> Cha
 ## 6. Пример использования: три сценария
 
 ```python
-settings = Settings.from_env()
+settings = Settings()          # pydantic-settings: .env + окружение
+client = build_client(settings)  # один клиент на все сценарии
+try:
+    # 1. Один запрос — один ответ
+    result = await ask_once(client, settings)
+    print(result.content, result.usage.total_tokens)
 
-# 1. Один запрос — один ответ
-result = await ask_once(settings, question)
-print(result.content, result.usage.total_tokens)
+    # 2. Стриминг
+    await ask_streaming(client, settings)
 
-# 2. Стриминг с расходом токенов
-await ask_streaming(settings, question)
-
-# 3. Деградация: основная модель, затем резервные
-chain = (settings.model, *settings.fallback_models)
-for model in chain:
-    try:
-        return await client.chat(messages, model=model, ...)
-    except ProviderError as error:
-        if not error.retryable:
-            raise              # 400 — это ошибка запроса, менять модель нет смысла
+    # 3. Деградация: основная модель, затем резервные
+    for model in settings.fallback_chain:
+        try:
+            return await client.chat(messages, model=model, ...)
+        except ProviderError as error:
+            if not error.retryable:
+                raise          # 400 — это ошибка запроса, менять модель нет смысла
+finally:
+    await client.aclose()
 ```
 
-Третий сценарий показывает правильную семантику fallback: **переход на резервную
-модель только на повторяемых отказах**. Ошибка запроса (400, 401, 422) должна
-всплывать наверх, а не маскироваться сменой модели.
+Сценарий fallback показывает правильную семантику: **переход на резервную модель
+только на повторяемых отказах**. Ошибка запроса (400, 401, 422) должна всплывать
+наверх, а не маскироваться сменой модели.
+
+Порядок попыток задан свойством `Settings.fallback_chain` — основная модель плюс
+резервные из `OPENROUTER_FALLBACK_MODELS` одним кортежем, чтобы не склеивать этот
+список в двух местах.
 
 ---
 
@@ -264,11 +278,11 @@ from fastapi import FastAPI, Request
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings = Settings.from_env()
+    settings = Settings()
     app.state.chat = create_client(
         settings.backend, api_key=settings.api_key, base_url=settings.base_url,
         app_url=settings.app_url, app_title=settings.app_title,
-        timeout_seconds=settings.timeout_seconds, max_retries=settings.max_retries,
+        timeout_seconds=settings.timeout_seconds,
     )
     yield
     await app.state.chat.aclose()          # один клиент на процесс, закрытие на выходе
@@ -288,6 +302,10 @@ async def chat(request: Request, body: ChatRequest):
 
 ## 8. Что осталось за рамками примера
 
+- **Повторы и `Retry-After`.** Клиент делает один запрос и поднимает `ProviderError`;
+  политику повторов (сколько, с каким backoff, когда сдаваться) выбирает
+  приложение. В примере её нет, чтобы не смешивать принцип устройства чата с
+  надёжностью — разбор в `aggregators_part3_reliability_and_practice.md`.
 - **`provider`-объект агрегатора** (`order`, `allow_fallbacks`, `require_parameters`,
   `data_collection`) не используется ради краткости. Для OpenAI SDK он передаётся
   через `extra_body={"provider": {...}}`, для httpx — лишним ключом в теле. Если
@@ -296,6 +314,10 @@ async def chat(request: Request, body: ChatRequest):
   этого не умеет.
 - **Массив `models`** у OpenRouter (встроенный fallback на стороне агрегатора) —
   альтернатива ручной цепочке из сценария 3.
+- **Расход токенов в стриме** — usage приходит в последнем чанке; чтобы его
+  собирать, у SDK есть `stream_options={"include_usage": True}`, у httpx — разбор
+  финального чанка вручную. Здесь это опущено, потому что требует различать текст
+  и `Usage` в одном потоке.
 - **Подсчёт стоимости** — в примере есть только `Usage`; цены и калькуляция
   вынесены за скобки, потому что источник цен у каждого свой.
 - **Prompt caching, зондирование доступных моделей, ротация ключей** — темы
@@ -311,11 +333,11 @@ async def chat(request: Request, body: ChatRequest):
 | Заголовки `HTTP-Referer` / `X-Title` | нет нигде | заданы на клиенте, один раз |
 | Переиспользование соединения | новый `AsyncClient` на вызов (llm-council) | один клиент на процесс |
 | Таймауты | почти не заданы | дифференцированные, `connect`/`read`/общий |
-| Повторы на 429/5xx | нет (кроме линейного в RAG) | экспоненциальный backoff + `Retry-After` |
-| Повтор прерванного стрима | — | запрещён после первого отданного фрагмента |
+| Настройки | разбор окружения руками в каждом проекте | одна модель `pydantic-settings` с явными именами переменных |
+| Стриминг | ручной разбор SSE в llm-council | тот же разбор, но за одним контрактом с `chat()` |
 | Ошибка провайдера | `return None` / текст в стрим | `ProviderError` со `status_code` и `retryable` |
 | Fallback-модель | только в RAG-чатботе | сценарий с явной цепочкой и проверкой `retryable` |
-| Расход токенов в стриме | не собирается | `include_usage` (SDK) / финальный чанк (httpx) |
+| Датаклассы vs pydantic | смешано | pydantic только на входных данных, датаклассы на выходных |
 
 ### Связанные документы
 

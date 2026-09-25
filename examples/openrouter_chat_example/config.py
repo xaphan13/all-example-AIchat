@@ -1,75 +1,74 @@
-"""Пример чтения настроек.
+"""Настройки примера.
 
-Показывает, откуда берутся ключ, адрес агрегатора и параметры повторов.
-В реальном проекте это место заменяется на ваш конфиг (pydantic-settings,
-Django settings, переменные окружения и т. п.) — остальной код не меняется.
+Здесь показано, как читать ключ, адрес агрегатора и параметры запроса.
+Настройки описаны один раз типизированно (`pydantic-settings`), берутся из
+переменных окружения и, если рядом лежит `.env`, — ещё и оттуда.
+
+Источник настроек — единственное, что меняется при переносе в другой проект.
+Сам код клиента (`chat.py` и реализации) знать про него не должен: он получает
+уже готовые значения.
 """
 
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _env_int(name: str, default: int) -> int:
-    raw = os.getenv(name)
-    if not raw:
-        return default
-    try:
-        return int(raw)
-    except ValueError as error:
-        raise ValueError(f"{name} должно быть целым числом, получено {raw!r}") from error
-
-
-@dataclass(frozen=True, slots=True)
-class Settings:
+class Settings(BaseSettings):
     """Настройки доступа к агрегатору.
 
-    Значения по умолчанию рассчитаны на OpenRouter: это его адрес и его формат
-    заголовков. Для другого агрегатора меняются только `base_url` и, при
-    необходимости, `app_url` / `app_title`.
+    Значения по умолчанию рассчитаны на OpenRouter: это его адрес и его
+    формат заголовков атрибуции. Для другого агрегатора меняются `base_url`
+    и, при необходимости, `app_url` / `app_title`.
+
+    У каждого поля задан явный `alias` с именем переменной окружения:
+    так видно, что именно читать в `.env`, и pydantic-settings не зависит
+    от регистра и префиксов.
     """
 
-    backend: str          # какой реализацией работать: "httpx" или "openai"
-    api_key: str          # ключ агрегатора
-    base_url: str         # адрес OpenAI-совместимого входа
-    model: str            # модель в формате вендор/модель, например "openai/gpt-4o-mini"
-    fallback_models: tuple[str, ...]  # чем подменить модель, если основная отказала
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
 
-    app_url: str          # HTTP-Referer: атрибуция приложения в статистике агрегатора
-    app_title: str        # X-Title: имя приложения в статистике агрегатора
+    # --- Доступ ---
+    # Ключ обязателен: без него нет смысла запускать. Секрет живёт только
+    # в окружении, в исходниках его быть не должно.
+    api_key: str = Field(..., alias="OPENROUTER_API_KEY")
+    base_url: str = Field("https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL")
+    model: str = Field("openai/gpt-4o-mini", alias="OPENROUTER_MODEL")
 
-    timeout_seconds: float
-    max_retries: int      # число повторов на 429 и 5xx
-    retry_backoff_seconds: float  # база экспоненциального backoff
+    # Резервные модели: чем подменить основную, если она откажет.
+    # В окружении это строка через запятую, поэтому её разбирает валидатор ниже.
+    # Тип объявлен как `str`, а не `tuple`, намеренно: для «сложных» типов
+    # pydantic-settings сначала пытается разобрать значение как JSON и падает
+    # на обычной строке, не дойдя до валидатора.
+    fallback_models: str = Field("", alias="OPENROUTER_FALLBACK_MODELS")
 
-    temperature: float
-    max_tokens: int
+    # --- Атрибуция в статистике агрегатора ---
+    app_url: str = Field("http://localhost", alias="OPENROUTER_APP_URL")           # HTTP-Referer
+    app_title: str = Field("OpenRouter Chat Example", alias="OPENROUTER_APP_TITLE")  # X-Title
 
+    # --- Параметры запроса ---
+    temperature: float = Field(0.7, alias="CHAT_TEMPERATURE")
+    max_tokens: int = Field(1024, alias="CHAT_MAX_TOKENS")
+    timeout_seconds: float = Field(60.0, alias="CHAT_TIMEOUT_SECONDS")
+
+    # Какая реализация работает: "httpx" или "openai".
+    backend: str = Field("httpx", alias="CHAT_BACKEND")
+
+    @property
+    def fallback_chain(self) -> tuple[str, ...]:
+        """Основная модель и резервные одним кортежем: порядок попыток."""
+        return (self.model, *self.fallback_models)
+
+    @field_validator("fallback_models", mode="after")
     @classmethod
-    def from_env(cls) -> "Settings":
-        """Собрать настройки из окружения, не подставляя секреты в код."""
-        api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        if not api_key:
-            raise RuntimeError(
-                "Не задан OPENROUTER_API_KEY. Ключ должен приходить из окружения "
-                "или секрет-менеджера, а не храниться в исходниках."
-            )
-
-        raw_fallbacks = os.getenv("OPENROUTER_FALLBACK_MODELS", "")
-        fallback_models = tuple(m.strip() for m in raw_fallbacks.split(",") if m.strip())
-
-        return cls(
-            backend=os.getenv("CHAT_BACKEND", "httpx"),
-            api_key=api_key,
-            base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-            model=os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
-            fallback_models=fallback_models,
-            app_url=os.getenv("OPENROUTER_APP_URL", "http://localhost"),
-            app_title=os.getenv("OPENROUTER_APP_TITLE", "OpenRouter Chat Example"),
-            timeout_seconds=float(os.getenv("CHAT_TIMEOUT_SECONDS", "60")),
-            max_retries=_env_int("CHAT_MAX_RETRIES", 3),
-            retry_backoff_seconds=float(os.getenv("CHAT_RETRY_BACKOFF_SECONDS", "0.5")),
-            temperature=float(os.getenv("CHAT_TEMPERATURE", "0.7")),
-            max_tokens=_env_int("CHAT_MAX_TOKENS", 1024),
-        )
+    def _split_models(cls, value: object) -> tuple[str, ...]:
+        """Разобрать `OPENROUTER_FALLBACK_MODELS="a, b"` в кортеж имён."""
+        if not isinstance(value, str):
+            return tuple(value)  # type: ignore[arg-type]
+        return tuple(name.strip() for name in value.split(",") if name.strip())

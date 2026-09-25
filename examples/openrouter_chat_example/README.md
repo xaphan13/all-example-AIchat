@@ -1,96 +1,107 @@
-# Example: chat with an aggregator provider (OpenRouter and alike)
+# Пример: чат с агрегатором моделей (OpenRouter и аналоги)
 
-Minimal, portable example of talking to an **OpenAI-compatible aggregator** —
-OpenRouter first, any similar service (LiteLLM proxy, Portkey, YesScale, Together,
-self-hosted gateway) by changing the address only.
+Минимальный пример разговора с **OpenAI-совместимым агрегатором**: OpenRouter из
+коробки, любой аналог (LiteLLM Proxy, Portkey, Together, self-hosted шлюз) — сменой
+адреса. Цель примера — показать принцип, а не дать продакшен-библиотеку: код
+намеренно короткий и читается целиком.
 
-The goal is a piece of code you can **copy into another project**: one contract,
-two implementations behind it, no framework lock-in.
+## Что здесь показано
 
-## Files
+1. **Один контракт, две реализации.** Приложение знает только `ChatClient`.
+   Подменяется библиотека доступа — меняется одна ветка фабрики `create_client(...)`.
+2. **Как выглядит протокол.** `httpx_client.py` разбирает SSE вручную: видно тело
+   запроса, заголовки, строки `data:`, финальный `[DONE]`.
+3. **Как то же самое делает SDK.** `openai_client.py` — тот же контракт через
+   `AsyncOpenAI` с подменённым `base_url`.
+4. **Ошибки не проглатываются.** Клиент поднимает `ProviderError`, а не возвращает
+   `None`; решение «показать ошибку / взять резервную модель» принимает вызывающий код.
+5. **Заголовки атрибуции.** `HTTP-Referer` и `X-Title` — то, по чему агрегатор
+   считает статистику приложения.
 
-| File | What it contains |
+## Файлы
+
+| Файл | Что внутри |
 |---|---|
-| `chat.py` | The contract: `ChatClient` interface, `ChatMessage`, `ChatResult`, `Usage`, `ProviderError`, and the `create_client(...)` factory |
-| `httpx_client.py` | Implementation on `httpx`: raw request body, attribution headers, SSE parsing, retries on 429/5xx, `Retry-After` |
-| `openai_client.py` | Implementation on the official OpenAI SDK with a substituted `base_url` |
-| `config.py` | How settings are read (key, address, model, fallback chain, timeouts) |
-| `example_usage.py` | Three scenarios: single answer, streaming, fallback models |
+| `chat.py` | Контракт: `ChatClient`, `ChatMessage`, `ChatResult`, `Usage`, `ProviderError`, фабрика `create_client(...)` |
+| `httpx_client.py` | Реализация на `httpx`: тело запроса, заголовки, разбор SSE |
+| `openai_client.py` | Реализация на официальном SDK OpenAI с подменённым `base_url` |
+| `config.py` | Настройки на `pydantic-settings`: ключ, адрес, модель, fallback |
+| `example_usage.py` | Три сценария: один ответ, стриминг, fallback-модели |
+| `.env.example` | Шаблон переменных окружения |
 
-A Russian-language guide with the same material lives at
-`../../report/aggregator_chat_code_example.md`.
+Подробный разбор с объяснением решений — в
+`../aggregator_chat_code_example.md`.
 
-## Requirements
-
-- Python 3.10+
-- `httpx` and/or `openai` (see `requirements.txt`)
-
-## Run
+## Запуск через uv
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
-python -m examples.openrouter_chat_example.example_usage
+cp examples/openrouter_chat_example/.env.example .env    # и вписать свой ключ
+uv sync
+uv run python -m examples.openrouter_chat_example.example_usage
 ```
 
-Pick the implementation:
+Из директории самого примера — то же самое:
 
 ```bash
-CHAT_BACKEND=httpx    # default: raw HTTP, no SDK
-CHAT_BACKEND=openai   # official OpenAI SDK over the same endpoint
+cd examples/openrouter_chat_example
+cp .env.example .env
+uv sync
+uv run python -m openrouter_chat_example.example_usage
 ```
 
-## Environment variables
+Реализация на SDK OpenAI требует отдельного extra:
 
-| Variable | Default | Meaning |
+```bash
+uv sync --extra openai
+CHAT_BACKEND=openai uv run python -m examples.openrouter_chat_example.example_usage
+```
+
+## Переменные окружения
+
+Значения читаются из `.env` (если файл есть) или из окружения процесса.
+
+| Переменная | Значение по умолчанию | Смысл |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | Required. Aggregator key. Never keep it in source code |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Aggregator endpoint. Change it for a different service |
-| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Model in `vendor/model` form |
-| `OPENROUTER_FALLBACK_MODELS` | empty | Comma-separated reserve models, tried in order on retryable failures |
-| `OPENROUTER_APP_URL` | `http://localhost` | `HTTP-Referer` value: app attribution in aggregator stats |
-| `OPENROUTER_APP_TITLE` | `OpenRouter Chat Example` | `X-Title` value: app name in aggregator stats |
-| `CHAT_BACKEND` | `httpx` | Which implementation to use |
-| `CHAT_TIMEOUT_SECONDS` | `60` | Whole-request timeout; also the gap between stream chunks |
-| `CHAT_MAX_RETRIES` | `3` | Retries on 429/5xx and network errors |
-| `CHAT_RETRY_BACKOFF_SECONDS` | `0.5` | Base for exponential backoff |
-| `CHAT_TEMPERATURE` | `0.7` | Sampling temperature |
-| `CHAT_MAX_TOKENS` | `1024` | Cap on the answer length |
+| `OPENROUTER_API_KEY` | — | Обязательна. Ключ агрегатора, в коде не хранится |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Адрес агрегатора. Для другого сервиса меняется только он |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Модель в формате `вендор/модель` |
+| `OPENROUTER_FALLBACK_MODELS` | пусто | Резервные модели через запятую, пробуются по порядку |
+| `CHAT_BACKEND` | `httpx` | Какая реализация работает: `httpx` или `openai` |
+| `OPENROUTER_APP_URL` | `http://localhost` | Значение заголовка `HTTP-Referer` |
+| `OPENROUTER_APP_TITLE` | `OpenRouter Chat Example` | Значение заголовка `X-Title` |
+| `CHAT_TIMEOUT_SECONDS` | `60` | Таймаут запроса; он же — пауза между чанками стрима |
+| `CHAT_TEMPERATURE` | `0.7` | Температура сэмплирования |
+| `CHAT_MAX_TOKENS` | `1024` | Ограничение длины ответа |
 
-## Design decisions worth keeping
+## Что важно понять из примера
 
-1. **The client is created once per process.** `AsyncClient`/`AsyncOpenAI` reuse
-   connections; creating a client per request destroys the pool and TLS sessions.
-   Call `aclose()` on shutdown.
-2. **Retries live on one level only.** The OpenAI SDK already retries twice on
-   429/5xx, so `openai_client.py` adds no retry loop. The `httpx` implementation
-   implements retries itself. Doing both multiplies attempts and timeouts.
-3. **A stream is not replayed once text has been emitted** — otherwise the user
-   would see duplicated output. `httpx_client.py` tracks `emitted_text`.
-4. **`Retry-After` is respected** when the aggregator sends it.
-5. **Attribution headers are set once on the client**, not per request.
-6. **Errors are not swallowed.** The client raises `ProviderError` with
-   `status_code` and `retryable`; fallback/retry policy is the caller's decision.
-7. **The provider object of the aggregator is not used here** for brevity, but it
-   is the natural next step: `extra_body={"provider": {...}}` for the OpenAI SDK,
-   or an extra key in the request body for `httpx`.
+- **Клиент создаётся один раз на процесс.** `AsyncClient` / `AsyncOpenAI`
+  переиспользуют соединения; создание клиента на каждый запрос убивает пул и
+  TLS-сессии. В примере клиент создаётся на сценарий и закрывается в `finally`.
+- **Стрим нельзя переигрывать после первого отданного фрагмента** — иначе
+  пользователь увидит дубли текста.
+- **`max_tokens` и `max_completion_tokens` — разные параметры.** Разные модели
+  принимают разные; `httpx`-клиент шлёт `max_tokens`, SDK-клиент —
+  `max_completion_tokens`.
+- **`stream=True` меняет тип ответа**, а не только способ доставки: вместо одного
+  JSON приходит поток строк SSE, которые нужно разбирать самому.
+- **Заголовки атрибуции ставятся на клиент, а не на каждый запрос.**
 
-## Notes specific to aggregators
+## Заметки про агрегаторы
 
-- Under one model name there can be **several providers**, each with its own
-  parameter set. If you rely on tool calling or structured output, set
-  `provider.require_parameters = true` — otherwise the request may silently
-  degrade to a provider that does not support what you asked for.
-- In a stream, usage arrives **exactly once**, in the last chunk before `[DONE]`,
-  and that chunk contains a non-empty `choices` array (unlike the OpenAI spec).
-  `httpx_client.py` handles this explicitly.
-- Some models accept `max_completion_tokens`, others only `max_tokens`. If you
-  switch models, keep an eye on this.
+- Под одним именем модели может скрываться **несколько провайдеров** с разными
+  наборами параметров. Если полагаетесь на tool calling или structured output,
+  нужен `provider.require_parameters = true` — иначе запрос может молча уехать к
+  провайдеру, который этого не умеет. В примере это не показано ради краткости.
+- В потоке `usage` приходит **один раз**, в последнем чанке перед `[DONE]`, и этот
+  чанк содержит непустой `choices` (в отличие от спецификации OpenAI). Здесь
+  расход токенов в стриме намеренно не собирается — чтобы не усложнять пример;
+  для продакшена это делается через `stream_options={"include_usage": True}`.
+- У агрегатора есть собственный **массив `models`** (fallback на его стороне) —
+  альтернатива ручной цепочке из третьего сценария.
 
-## Porting into another project
+## Что сознательно не показано
 
-1. Copy `chat.py` and one implementation (`httpx_client.py` and/or
-   `openai_client.py`).
-2. Replace `config.py` with your own settings source — the client code does not
-   care where the key and address come from.
-3. Keep calling `create_client(...)`; add a branch there for a new provider.
-4. Leave `example_usage.py` behind — it is only a demo.
+Ретраи и `Retry-After`, подсчёт стоимости, кэширование промптов, ротация ключей,
+`provider`-объект агрегатора. Это темы надёжности, а не принципа устройства чата;
+разбор — в `../aggregators_part3_reliability_and_practice.md`.

@@ -1,9 +1,9 @@
 """Пример использования: один ответ, поток, fallback-модели.
 
-Запуск (нужен только ключ, остальное имеет дефолты):
+Запуск (нужен только ключ, остальное имеет значения по умолчанию):
 
     export OPENROUTER_API_KEY=sk-or-...
-    uv run python -m examples.openrouter_chat_example.example_usage
+    uv run python -m examples.openrouter_chat_example
 
 Выбор реализации:
 
@@ -14,124 +14,92 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 
-from .chat import ChatMessage, ChatResult, ProviderError, create_client
+from .chat import ChatClient, ChatMessage, ChatResult, create_client
 from .config import Settings
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+QUESTION = "Объясни в трёх предложениях, что такое OpenAI-совместимый API."
 
 
-async def ask_once(settings: Settings, question: str) -> ChatResult:
+def build_client(settings: Settings) -> ChatClient:
+    """Собрать клиент из настроек. Один клиент на весь сценарий."""
+    return create_client(
+        settings.backend,
+        api_key=settings.api_key,
+        base_url=settings.base_url,
+        app_url=settings.app_url,
+        app_title=settings.app_title,
+        timeout_seconds=settings.timeout_seconds,
+    )
+
+
+async def ask_once(client: ChatClient, settings: Settings) -> ChatResult:
     """Один запрос — один полный ответ."""
-    client = create_client(
-        settings.backend,
-        api_key=settings.api_key,
-        base_url=settings.base_url,
-        app_url=settings.app_url,
-        app_title=settings.app_title,
-        timeout_seconds=settings.timeout_seconds,
-        max_retries=settings.max_retries,
+    return await client.chat(
+        [ChatMessage(role="user", content=QUESTION)],
+        model=settings.model,
+        temperature=settings.temperature,
+        max_tokens=settings.max_tokens,
     )
-    try:
-        return await client.chat(
-            [ChatMessage(role="user", content=question)],
-            model=settings.model,
-            temperature=settings.temperature,
-            max_tokens=settings.max_tokens,
-        )
-    finally:
-        await client.aclose()
 
 
-async def ask_streaming(settings: Settings, question: str) -> None:
-    """Тот же вопрос, но с показом текста по мере генерации."""
-    client = create_client(
-        settings.backend,
-        api_key=settings.api_key,
-        base_url=settings.base_url,
-        app_url=settings.app_url,
-        app_title=settings.app_title,
-        timeout_seconds=settings.timeout_seconds,
-        max_retries=settings.max_retries,
-    )
-    try:
-        messages = [
-            ChatMessage(role="system", content="Отвечай кратко и по делу."),
-            ChatMessage(role="user", content=question),
-        ]
-        async for item in client.stream_with_usage(
-            messages,
-            model=settings.model,
-            temperature=settings.temperature,
-            max_tokens=settings.max_tokens,
-        ):
-            if isinstance(item, str):
-                print(item, end="", flush=True)
-            else:
-                print(f"\n[токены: {item.prompt_tokens} + {item.completion_tokens}]")
-    finally:
-        await client.aclose()
-
-
-async def ask_with_fallback(settings: Settings, question: str) -> ChatResult:
+async def ask_with_fallback(client: ChatClient, settings: Settings) -> ChatResult:
     """Ответ с переходом на резервные модели.
 
-    Порядок попыток: основная модель, затем по очереди резервные из
-    `OPENROUTER_FALLBACK_MODELS`. Переход выполняется только на повторяемых
-    отказах — если провайдер ответил 400, это ошибка запроса, а не повод
-    менять модель.
+    Порядок: основная модель, затем по очереди резервные из
+    `OPENROUTER_FALLBACK_MODELS`. Резервные модели — самый простой способ
+    пережить недоступность одной модели у агрегатора.
     """
-    client = create_client(
-        settings.backend,
-        api_key=settings.api_key,
-        base_url=settings.base_url,
-        app_url=settings.app_url,
-        app_title=settings.app_title,
-        timeout_seconds=settings.timeout_seconds,
-        max_retries=settings.max_retries,
-    )
-    chain = (settings.model, *settings.fallback_models)
-    last_error: ProviderError | None = None
+    messages = [ChatMessage(role="user", content=QUESTION)]
 
-    try:
-        for model in chain:
-            try:
-                return await client.chat(
-                    [ChatMessage(role="user", content=question)],
-                    model=model,
-                    temperature=settings.temperature,
-                    max_tokens=settings.max_tokens,
-                )
-            except ProviderError as error:
-                last_error = error
-                if not error.retryable:
-                    raise
-                logging.getLogger(__name__).warning(
-                    "Модель %s недоступна (%s), перехожу к следующей", model, error
-                )
-    finally:
-        await client.aclose()
+    for model in settings.fallback_chain:
+        try:
+            return await client.chat(
+                messages,
+                model=model,
+                temperature=settings.temperature,
+                max_tokens=settings.max_tokens,
+            )
+        except Exception as error:  # noqa: BLE001 — в примере важно показать саму идею
+            print(f"  модель {model} не ответила ({error}), пробую следующую")
 
-    raise last_error or ProviderError("Ни одна модель не ответила")
+    raise RuntimeError("Ни одна модель не ответила")
+
+
+async def ask_streaming(client: ChatClient, settings: Settings) -> None:
+    """Тот же вопрос, но с показом текста по мере генерации."""
+    messages = [
+        ChatMessage(role="system", content="Отвечай кратко и по делу."),
+        ChatMessage(role="user", content=QUESTION),
+    ]
+    async for chunk in client.stream(
+        messages,
+        model=settings.model,
+        temperature=settings.temperature,
+        max_tokens=settings.max_tokens,
+    ):
+        print(chunk, end="", flush=True)
+    print()
 
 
 async def main() -> None:
-    settings = Settings.from_env()
-    question = "Объясни в трёх предложениях, что такое OpenAI-совместимый API."
+    settings = Settings()
+    client = build_client(settings)
+    try:
+        print("--- один запрос ---")
+        result = await ask_once(client, settings)
+        print(result.content)
+        print(f"модель: {result.model}, токены: {result.usage.total_tokens}")
 
-    result = await ask_once(settings, question)
-    print("--- один запрос ---")
-    print(result.content)
-    print(f"модель: {result.model}, токены: {result.usage.total_tokens}")
+        if len(settings.fallback_chain) > 1:
+            print("\n--- с fallback-моделями ---")
+            answer = await ask_with_fallback(client, settings)
+            print(f"ответила модель: {answer.model}")
 
-    if settings.fallback_models:
-        print("\n--- с fallback-моделями ---")
-        answer = await ask_with_fallback(settings, question)
-        print(f"ответила модель: {answer.model}")
-
-    print("\n--- стриминг ---")
-    await ask_streaming(settings, question)
+        print("\n--- стриминг ---")
+        await ask_streaming(client, settings)
+    finally:
+        await client.aclose()
 
 
 if __name__ == "__main__":
